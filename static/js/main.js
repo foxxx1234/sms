@@ -173,6 +173,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const ports = selected.length ? selected : allPorts;
 
     if (action === 'connect') {
+
+      fetch('/api/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify({ ports })
+      })
+      .then(async res => {
+        if (res.ok && res.headers.get('Content-Type')?.startsWith('text/event-stream')) {
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            let idx;
+            while ((idx = buffer.indexOf('\n\n')) !== -1) {
+              const chunk = buffer.slice(0, idx).trim();
+              buffer = buffer.slice(idx + 2);
+              if (chunk.startsWith('data:')) {
+                const data = chunk.slice(5).trim();
+                try {
+                  const info = JSON.parse(data);
+                  updateRows({ [info.port]: info });
+                  log(`connect: ${info.port}`);
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+            }
+          }
+          return null; // streamed
+        }
+        return res.json();
+      })
+      .then(res => {
+        if (!res) return;
+        if (res.results) {
+          updateRows(res.results);
+          log(`connect: ${Object.keys(res.results).join(', ')}`);
+        } else if (res.ports) {
+          log(`${action}: ${res.ports.join(', ')}`);
+        } else {
+          log(`${action}: ${JSON.stringify(res)}`);
+        }
+      })
+      .catch(err => log(`connect error: ${err}`));
+
       const params = new URLSearchParams();
       ports.forEach(p => params.append('ports', p));
       const es = new EventSource(`/api/connect?${params.toString()}`);
@@ -186,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
       es.onerror = () => es.close();
+
       return;
     }
 
