@@ -16,8 +16,8 @@
       </thead>
       <tbody>
         {% if ports %}
-          {# Показываем первые 20 строк, остальные доступны по скроллу #}
-          {% for port in ports[:20] %}
+          {# Все строки, прокрутка ограничивает высоту таблицы #}
+          {% for port in ports %}
             <tr data-port="{{ port }}">
               <td><input type="checkbox" class="sel"></td>
               {% for key in labels.keys() %}

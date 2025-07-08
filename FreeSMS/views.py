@@ -22,9 +22,11 @@ def index():
     # сканируем все порты
     ports = list_modem_ports()
 
-    # локализованные заголовки таблицы
-    hdr_keys = list(current_app.config["TRANSLATIONS"]["table_headers"].keys())
-    labels   = {k: t(f"table_headers.{k}", lang) for k in hdr_keys}
+    # Заголовки таблицы: все переводы и текущий язык отдельно
+    translations = current_app.config["TRANSLATIONS"]["table_headers"]
+    hdr_keys = list(translations.keys())
+    labels_all = {k: translations[k] for k in hdr_keys}
+    labels_cur = {k: t(f"table_headers.{k}", lang) for k in hdr_keys}
 
     # кнопки и вкладки из конфигурации
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
@@ -33,7 +35,8 @@ def index():
     return render_template(
         "index.html",
         ports=ports,
-        labels=labels,
+        labels=labels_cur,
+        labels_all=labels_all,
         buttons=buttons,
         tabs=tabs,
         lang=lang,
@@ -51,6 +54,7 @@ def phones():
         "phones.html",
         buttons=buttons,
         tabs=tabs,
+        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
         lang=lang,
         t=t
     )
@@ -65,6 +69,7 @@ def received():
         "received.html",
         buttons=buttons,
         tabs=tabs,
+        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
         lang=lang,
         t=t
     )
@@ -79,6 +84,7 @@ def sent():
         "sent.html",
         buttons=buttons,
         tabs=tabs,
+        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
         lang=lang,
         t=t
     )
@@ -94,6 +100,7 @@ def rules():
         rules_list=RULES,
         buttons=buttons,
         tabs=tabs,
+        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
         lang=lang,
         t=t
     )
@@ -108,6 +115,7 @@ def no_rules():
         "no_rules.html",
         buttons=buttons,
         tabs=tabs,
+        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
         lang=lang,
         t=t
     )
@@ -122,6 +130,7 @@ def forward():
         "forward.html",
         buttons=buttons,
         tabs=tabs,
+        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
         lang=lang,
         t=t
     )
@@ -136,6 +145,7 @@ def settings():
         "settings.html",
         buttons=buttons,
         tabs=tabs,
+        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
         lang=lang,
         t=t
     )
