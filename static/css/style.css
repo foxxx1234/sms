@@ -164,32 +164,6 @@ section.modem-section {
   white-space: pre-wrap;
 }
 
-/* Модальные окна */
-#modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-}
-#modal-backdrop.hidden {
-  display: none;
-}
-#modal-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff;
-  padding: 1rem;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  z-index: 1001;
-  min-width: 320px;
-  max-width: 90%;
-}
 
 /* Скроллбар (опционально) */
 #log-entries::-webkit-scrollbar,
