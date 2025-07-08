@@ -4,6 +4,12 @@
 {% block content %}
   <section id="tab-ports" class="modem-section">
     <table id="modem-table">
+      <colgroup>
+        <col class="col-select">
+        {% for key in hdr_keys %}
+        <col data-key="{{ key }}">
+        {% endfor %}
+      </colgroup>
       <thead>
         <tr>
           <th><input type="checkbox" id="select-all"></th>

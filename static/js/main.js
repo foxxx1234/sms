@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let sortDir        = 1;  // 1 = возрастание, -1 = убывание
   let portInfo       = {};
   let connectController = null;
+  let expandedCount  = 0;
 
   // Показываем/скрываем полное значение ячейки при клике
   table.addEventListener('click', e => {
@@ -46,10 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
       td.textContent = td.dataset.short;
       td.dataset.expanded = '';
       td.classList.remove('expanded');
+      expandedCount = Math.max(0, expandedCount - 1);
+      if (expandedCount === 0) table.style.tableLayout = 'fixed';
     } else {
       td.textContent = td.dataset.full;
       td.dataset.expanded = '1';
       td.classList.add('expanded');
+      expandedCount += 1;
+      table.style.tableLayout = 'auto';
     }
   });
 
@@ -436,6 +441,35 @@ document.addEventListener('DOMContentLoaded', () => {
   thead.querySelectorAll('th').forEach(th => {
     if (th.dataset.key) th.classList.add('sortable');
   });
+  initColumnResizers();
+
+  function initColumnResizers() {
+    const cols = table.querySelectorAll('colgroup col');
+    thead.querySelectorAll('th').forEach((th, idx) => {
+      if (idx === 0) return;
+      const resizer = document.createElement('div');
+      resizer.className = 'col-resizer';
+      th.appendChild(resizer);
+      let startX, startWidth;
+      const col = cols[idx];
+      function onMouseMove(ev) {
+        const dx = ev.pageX - startX;
+        col.style.width = (startWidth + dx) + 'px';
+        table.style.tableLayout = 'auto';
+      }
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
+      resizer.addEventListener('mousedown', ev => {
+        ev.preventDefault();
+        startX = ev.pageX;
+        startWidth = parseInt(getComputedStyle(col).width) || th.offsetWidth;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    });
+  }
 
   // Загрузка сохранённой информации о портах
   try {

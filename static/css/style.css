@@ -98,13 +98,14 @@ main#main-content {
 /* Таблица модемов */
 section.modem-section {
   width: 100%;
-  overflow-x: auto;
+  overflow: auto;
+  resize: vertical;
 }
 #modem-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
-  table-layout: fixed; /* не растягиваем таблицу */
+  table-layout: fixed;
 }
 #modem-table thead {
   background: #34495e;
@@ -125,6 +126,18 @@ section.modem-section {
   white-space: normal;
   max-width: none;
   overflow: visible;
+}
+#modem-table th {
+  position: relative;
+}
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
 }
 #modem-table th.sortable {
   cursor: pointer;
@@ -147,6 +160,8 @@ section.modem-section {
   padding: 0.75rem;
   background: #ecf0f1;
   border-top: 2px solid #ccc;
+  resize: vertical;
+  overflow: auto;
 }
 #log-panel .log-controls {
   display: flex;
