@@ -51,6 +51,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let connectController = null;
   let expandedCount  = 0;
   let hiddenCols     = [];
+  let scriptsDisabled = false;
+
+  function setScriptsDisabled(state) {
+    scriptsDisabled = state;
+    document.body.classList.toggle('scripts-disabled', state);
+    window.scriptsDisabled = scriptsDisabled;
+  }
+
+  function clearModemData() {
+    portInfo = {};
+    localStorage.removeItem('portInfo');
+    renderTable();
+  }
 
   // Показываем/скрываем полное значение ячейки при клике
   table.addEventListener('click', e => {
@@ -244,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ports = selected.length ? selected : allPorts;
 
     if (action === 'connect') {
+      setScriptsDisabled(false);
       if (connectController) connectController.abort();
       connectController = new AbortController();
       connectBtn.classList.add('active-state');
@@ -310,6 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       disconnectBtn.classList.add('active-state');
       connectBtn.classList.remove('active-state');
+      setScriptsDisabled(true);
     }
 
     fetch(`/api/${action}`, {
@@ -327,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (action === 'disconnect') {
         log('disconnected');
+        clearModemData();
       }
     })
     .catch(err => log(`${action} error: ${err}`));
@@ -422,6 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Сортировка по клику на шапку
   thead.addEventListener('click', e => {
+    if (scriptsDisabled) return;
     const th = e.target.closest('th.sortable');
     if (!th) return;
     sortBy(th.dataset.key);
@@ -597,6 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {}
 
   renderTable();
+  window.scriptsDisabled = scriptsDisabled;
   // Старт
   loadPorts();
   switchTab('ports');
