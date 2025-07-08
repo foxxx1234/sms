@@ -204,16 +204,14 @@ def api_connect():
         lang = request.cookies.get("lang", get_language())
 
         def generate():
-            while True:
-                for p in ports:
-                    try:
-                        info = get_modem_info(p, lang)
-                    except Exception as e:
-                        info = {"port": p, "status": str(e)}
-                    if "port" not in info:
-                        info["port"] = p
-                    yield f"data: {json.dumps(info)}\n\n"
-                time.sleep(0.5)
+            for p in ports:
+                try:
+                    info = get_modem_info(p, lang)
+                except Exception as e:
+                    info = {"port": p, "status": str(e)}
+                if "port" not in info:
+                    info["port"] = p
+                yield f"data: {json.dumps(info)}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
@@ -225,16 +223,14 @@ def api_connect():
     # Check if the client expects streaming responses
     if request.headers.get("Accept") == "text/event-stream":
         def generate():
-            while True:
-                for p in ports:
-                    try:
-                        info = get_modem_info(p, lang)
-                    except Exception as e:
-                        info = {"port": p, "status": str(e)}
-                    if "port" not in info:
-                        info["port"] = p
-                    yield f"data: {json.dumps(info)}\n\n"
-                time.sleep(0.5)
+            for p in ports:
+                try:
+                    info = get_modem_info(p, lang)
+                except Exception as e:
+                    info = {"port": p, "status": str(e)}
+                if "port" not in info:
+                    info["port"] = p
+                yield f"data: {json.dumps(info)}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
