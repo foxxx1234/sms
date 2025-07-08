@@ -2,12 +2,10 @@ import json
 import requests
 import pycountry
 
-# Source with up‑to‑date MCC/MNC information
-URL = "https://raw.githubusercontent.com/unwiredlabs/mcc-mnc-table/master/mcc-mnc-table.json"
+URL = "https://raw.githubusercontent.com/nyaruka/carriers/master/carriers/fixtures/mccmnc.json"
 
 
 def fetch_operator_data():
-    """Download raw MCC/MNC data from the remote table."""
     resp = requests.get(URL, timeout=30)
     resp.raise_for_status()
     return resp.json()
@@ -19,23 +17,19 @@ def generate_ops_list(data):
         mcc = entry.get("mcc")
         mnc = entry.get("mnc")
         country_alpha2 = entry.get("iso")
-        # The unwiredlabs dataset uses the key ``network`` for operator name
-        operator_name = entry.get("network") or entry.get("name")
-
+        operator_name = entry.get("name")
         if not (mcc and mnc and country_alpha2 and operator_name):
             continue
-
         country = pycountry.countries.get(alpha_2=country_alpha2.upper())
         if not country:
             continue
-
         country_code = country.alpha_3.lower()
         operator_code = operator_name.lower().replace(" ", "-")
         result.append({
             "mcc": mcc,
             "mnc": mnc,
             "country": country_code,
-            "operator": operator_code,
+            "operator": operator_code
         })
     return result
 
