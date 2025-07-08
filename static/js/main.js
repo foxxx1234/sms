@@ -38,11 +38,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let portInfo       = {};
   let connectController = null;
 
-  // Показываем полное значение ячейки по клику
+  // Показываем/скрываем полное значение ячейки при клике
   table.addEventListener('click', e => {
     const td = e.target.closest('td[data-full]');
-    if (!td || td.querySelector('input')) return;
-    alert(td.dataset.full);
+    if (!td || td.querySelector('input') || !td.dataset.truncated) return;
+    if (td.dataset.expanded === '1') {
+      td.textContent = td.dataset.short;
+      td.dataset.expanded = '';
+      td.classList.remove('expanded');
+    } else {
+      td.textContent = td.dataset.full;
+      td.dataset.expanded = '1';
+      td.classList.add('expanded');
+    }
   });
 
   //
@@ -86,7 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
       tr.querySelectorAll('td[data-full]').forEach(td => {
         const full = td.dataset.full;
         if (full.length > 15) {
-          td.textContent = full.slice(0, 15) + '…';
+          td.dataset.short = full.slice(0, 15) + '…';
+          td.dataset.truncated = '1';
+          td.textContent = td.dataset.short;
         }
       });
       tbody.appendChild(tr);
@@ -127,7 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.innerHTML = html;
         tr.querySelectorAll('td[data-full]').forEach(td => {
           const full = td.dataset.full;
-          if (full.length > 15) td.textContent = full.slice(0,15) + '…';
+          if (full.length > 15) {
+            td.dataset.short = full.slice(0,15) + '…';
+            td.dataset.truncated = '1';
+            td.textContent = td.dataset.short;
+          }
         });
         tbody.appendChild(tr);
         row = tr;
@@ -141,7 +155,18 @@ document.addEventListener('DOMContentLoaded', () => {
           if (cell && results[port][key] !== undefined) {
             const fullVal = results[port][key];
             cell.dataset.full = fullVal;
-            cell.textContent = fullVal.toString().length > 15 ? fullVal.toString().slice(0,15) + '…' : fullVal;
+            if (fullVal.toString().length > 15) {
+              cell.dataset.short = fullVal.toString().slice(0,15) + '…';
+              cell.dataset.truncated = '1';
+              if (!cell.dataset.expanded) {
+                cell.textContent = cell.dataset.short;
+              } else {
+                cell.textContent = fullVal;
+              }
+            } else {
+              cell.dataset.truncated = '';
+              cell.textContent = fullVal;
+            }
           }
         });
       }
