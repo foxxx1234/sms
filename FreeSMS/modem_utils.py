@@ -131,6 +131,37 @@ def get_operator_from_imsi(imsi):
     return "unknown"
 
 
+def get_country_from_iccid(iccid: str) -> str:
+    """Возвращает трёхбуквенный ISO-код страны по MCC из ICCID."""
+    digits = re.sub(r"\D", "", iccid)
+    if not digits.startswith("89") or len(digits) < 5:
+        return ""
+    mcc = digits[2:5]
+    if mcc in COUNTRY_MAP:
+        return COUNTRY_MAP[mcc]
+    country = pycountry.countries.get(numeric=mcc)
+    if country:
+        return country.alpha_3.lower()
+    return ""
+
+
+def get_operator_from_iccid(iccid: str) -> str:
+    """Возвращает код оператора вида 'ccc-operator' по ICCID."""
+    digits = re.sub(r"\D", "", iccid)
+    if not digits.startswith("89") or len(digits) < 7:
+        return "unknown"
+    mcc = digits[2:5]
+    # Сначала пробуем MNC из трёх цифр
+    if len(digits) >= 8:
+        mnc = digits[5:8]
+        code = OPS_MAP.get(mcc + mnc)
+        if code:
+            return code
+    # Затем пробуем двухзначный MNC
+    mnc = digits[5:7]
+    return OPS_MAP.get(mcc + mnc, "unknown")
+
+
 def get_modem_info(port, lang=None):
     """
     Собирает информацию по модему на указанном порту.
@@ -159,8 +190,18 @@ def get_modem_info(port, lang=None):
     # IMSI → оператор и страна SIM
     imsi = extract_data(send_at_command(port, "AT+CIMI"))
     info["imsi"] = imsi or "—"
-    info["operator"] = get_operator_from_imsi(imsi) or "—"
-    info["sim_country"] = get_country_from_imsi(imsi) or "—"
+    operator = get_operator_from_imsi(imsi)
+    sim_country = get_country_from_imsi(imsi)
+
+    iccid = extract_data(send_at_command(port, "AT+CCID"))
+    info["iccid"] = iccid or "—"
+    if operator == "unknown" and iccid:
+        operator = get_operator_from_iccid(iccid)
+    if not sim_country and iccid:
+        sim_country = get_country_from_iccid(iccid)
+
+    info["operator"] = operator or "—"
+    info["sim_country"] = sim_country or "—"
 
     # Статус регистрации в сети
     reg = send_at_command(port, "AT+CREG?") or ""
@@ -173,7 +214,6 @@ def get_modem_info(port, lang=None):
 
     # Дополнительные данные
     info["imei"] = extract_data(send_at_command(port, "AT+CGSN")) or "—"
-    info["iccid"] = extract_data(send_at_command(port, "AT+CCID")) or "—"
     cpin = extract_data(send_at_command(port, "AT+CPIN?"))
     info["cpin"] = cpin or "—"
 
