@@ -86,15 +86,30 @@ document.addEventListener('DOMContentLoaded', () => {
   //
   function updateRows(results) {
     Object.keys(results).forEach(port => {
-      const row = tbody.querySelector(`tr[data-port="${port}"]`);
-      if (!row) return;
+      let row = tbody.querySelector(`tr[data-port="${port}"]`);
       const info = results[port];
-      Object.keys(labelsTrans).forEach(key => {
-        const cell = row.querySelector(`td.${key}`);
-        if (cell && info[key] !== undefined) {
-          cell.textContent = info[key];
+      // Если строки нет, добавляем новую
+      if (!row) {
+        row = document.createElement('tr');
+        row.dataset.port = port;
+        let html = '<td><input type="checkbox" class="sel"></td>';
+        Object.keys(labelsTrans).forEach(key => {
+          const val = key === 'port' ? port : (info[key] !== undefined ? info[key] : '—');
+          html += `<td class="${key}">${val}</td>`;
+        });
+        row.innerHTML = html;
+        tbody.appendChild(row);
+        if (!allPorts.includes(port)) {
+          allPorts.push(port);
         }
-      });
+      } else {
+        Object.keys(labelsTrans).forEach(key => {
+          const cell = row.querySelector(`td.${key}`);
+          if (cell && info[key] !== undefined) {
+            cell.textContent = info[key];
+          }
+        });
+      }
     });
   }
 
