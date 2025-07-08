@@ -142,6 +142,11 @@ def get_modem_info(port, lang=None):
     cpin = send_at_command(port, "AT+CPIN?").strip()
     info["cpin"] = cpin.replace("CPIN:", "").strip() if cpin else "—"
 
+    # Номер телефона SIM-карты
+    phone_resp = send_at_command(port, "AT+CNUM").strip()
+    m = re.search(r'"([+\\d]+)"', phone_resp)
+    info["phone"] = m.group(1) if m else "—"
+
     # Заглушки для SMS/Voice/USSD (реализуем позже)
     info["sms"] = 0
     info["voice"] = 0
