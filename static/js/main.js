@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let displayedCount = 20;
   let sortKey        = null;
   let sortDir        = 1;  // 1 = возрастание, -1 = убывание
+  let portInfo       = {};
 
   //
   // Добавить строку в лог
@@ -60,7 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
       let html = '';
       html += `<td><input type="checkbox" class="sel"${port ? '' : ' disabled'}></td>`;
       columnKeys.forEach(key => {
-        const val = (key === 'port' && port) ? port : '—';
+        let val = '—';
+        if (port) {
+          if (key === 'port') {
+            val = port;
+          } else if (portInfo[port] && portInfo[port][key] !== undefined) {
+            val = portInfo[port][key];
+          }
+        }
         html += `<td class="${key}">${val}</td>`;
       });
       tr.innerHTML = html;
@@ -89,43 +97,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let added = false;
     Object.keys(results).forEach(port => {
       let row = tbody.querySelector(`tr[data-port="${port}"]`);
+      portInfo[port] = Object.assign({}, portInfo[port] || {}, results[port], { port });
 
       if (!row) {
         const tr = document.createElement('tr');
         tr.dataset.port = port;
         let html = '<td><input type="checkbox" class="sel"></td>';
         columnKeys.forEach(key => {
-          const val = key === 'port' ? port : '—';
+          const val = key === 'port' ? port : (results[port][key] !== undefined ? results[port][key] : '—');
           html += `<td class="${key}">${val}</td>`;
         });
         tr.innerHTML = html;
         tbody.appendChild(tr);
         row = tr;
-        allPorts.push(port);
-        added = true;
-      }
-
-
-      const info = results[port];
-      // Если строки нет, добавляем новую
-      if (!row) {
-        row = document.createElement('tr');
-        row.dataset.port = port;
-        let html = '<td><input type="checkbox" class="sel"></td>';
-        columnKeys.forEach(key => {
-          const val = key === 'port' ? port : (info[key] !== undefined ? info[key] : '—');
-          html += `<td class="${key}">${val}</td>`;
-        });
-        row.innerHTML = html;
-        tbody.appendChild(row);
         if (!allPorts.includes(port)) {
           allPorts.push(port);
+          added = true;
         }
       } else {
         columnKeys.forEach(key => {
           const cell = row.querySelector(`td.${key}`);
-          if (cell && info[key] !== undefined) {
-            cell.textContent = info[key];
+          if (cell && results[port][key] !== undefined) {
+            cell.textContent = results[port][key];
           }
         });
       }
@@ -144,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
+    localStorage.setItem('portInfo', JSON.stringify(portInfo));
   }
 
   // делаем функцию глобальной, чтобы её вызывал contextMenu.js
@@ -157,6 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(r => r.json())
       .then(data => {
         allPorts = data.ports || [];
+        // добавляем сохранённые порты, если их нет в списке
+        Object.keys(portInfo).forEach(p => {
+          if (!allPorts.includes(p)) allPorts.push(p);
+        });
         displayedCount = 20;
         renderTable();
         log(`Scanned ports: ${allPorts.length}`);
@@ -257,11 +255,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Сортировка по порту (по алфавиту номера порта)
   //
   function sortBy(key) {
-    if (key !== 'port') return;  // сортируем только по порту
     sortDir = (sortKey === key) ? -sortDir : 1;
     sortKey = key;
     allPorts.sort((a, b) => {
-      const A = a.toLowerCase(), B = b.toLowerCase();
+      let A, B;
+      if (key === 'port') {
+        A = a.toLowerCase();
+        B = b.toLowerCase();
+      } else {
+        A = (portInfo[a] && portInfo[a][key] !== undefined ? portInfo[a][key] : '').toString().toLowerCase();
+        B = (portInfo[b] && portInfo[b][key] !== undefined ? portInfo[b][key] : '').toString().toLowerCase();
+      }
       return A < B ? -sortDir : A > B ? sortDir : 0;
     });
     renderTable();
@@ -366,6 +370,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (th.dataset.key) th.classList.add('sortable');
   });
 
+  // Загрузка сохранённой информации о портах
+  try {
+    const saved = localStorage.getItem('portInfo');
+    if (saved) {
+      portInfo = JSON.parse(saved);
+      allPorts = Object.keys(portInfo);
+    }
+  } catch (e) {}
+
+  renderTable();
   // Старт
   loadPorts();
   switchTab('ports');
