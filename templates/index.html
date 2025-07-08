@@ -3,6 +3,9 @@
 
 {% block content %}
   <section id="tab-ports" class="modem-section">
+    <div class="table-controls">
+      <button class="menu-btn" id="columns-table-btn" data-action="columns">{{ buttons.columns[lang] }}</button>
+    </div>
     <table id="modem-table">
       <colgroup>
         <col class="col-select">
@@ -43,9 +46,6 @@
         {% endif %}
       </tbody>
     </table>
-    <div class="table-controls">
-      <button class="menu-btn" id="columns-table-btn" data-action="columns">{{ buttons.columns[lang] }}</button>
-    </div>
     <div id="columns-panel" class="hidden column-panel"></div>
   </section>
 
