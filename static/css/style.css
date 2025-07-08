@@ -250,3 +250,9 @@ body.scripts-disabled nav.main-menu .menu-btn[data-action="connect"],
 body.scripts-disabled nav.main-menu .menu-btn[data-action="disconnect"] {
   pointer-events: auto;
 }
+body.scripts-disabled #modem-table tbody,
+body.scripts-disabled #modem-table tbody *,
+body.scripts-disabled #context-menu,
+body.scripts-disabled #context-menu * {
+  pointer-events: auto;
+}

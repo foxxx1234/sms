@@ -117,7 +117,6 @@ document.addEventListener("click", e => {
 
 // Перехватываем контекстное меню на строках таблицы
 document.addEventListener("contextmenu", e => {
-  if (window.scriptsDisabled) return;
   const row = e.target.closest("tr[data-port]");
   if (!row) return;
   e.preventDefault();
