@@ -177,15 +177,46 @@ def api_modem_info():
     info = get_modem_info(port, get_language())
     return jsonify(info)
 
-@app.route("/api/connect", methods=["POST"])
+@app.route("/api/connect", methods=["GET", "POST"])
 def api_connect():
     """Connect to selected ports and return modem info.
+
 
     Accepts JSON ``{"ports": [..]}`` and returns modem info either as
     a traditional aggregated JSON object or streams per-port results when the
     client requests ``text/event-stream``.
     """
 
+=======
+    POST  - returns a single JSON object for all ports (legacy behaviour)
+    GET   - streams JSON objects per port via Server-Sent Events
+    """
+
+    if request.method == "GET":
+        # EventStream mode: ?ports=COM1&ports=COM2 or comma separated
+        ports = request.args.getlist("ports")
+        if not ports:
+            ports_arg = request.args.get("ports", "")
+            if ports_arg:
+                ports = [p.strip() for p in ports_arg.split(",") if p.strip()]
+        if not ports:
+            ports = list_modem_ports()
+
+        lang = request.cookies.get("lang", get_language())
+
+        def generate():
+            for p in ports:
+                try:
+                    info = get_modem_info(p, lang)
+                except Exception as e:
+                    info = {"port": p, "status": str(e)}
+                if "port" not in info:
+                    info["port"] = p
+                yield f"data: {json.dumps(info)}\n\n"
+
+        return current_app.response_class(generate(), mimetype="text/event-stream")
+
+    # POST behaviour - return aggregated JSON for all ports
     data = request.get_json(force=True) or {}
     ports = data.get("ports") or list_modem_ports()
     lang = request.cookies.get("lang", get_language())
