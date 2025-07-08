@@ -74,6 +74,19 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTable();
   }
 
+  function clearPortInfo(selPorts = null) {
+    if (Array.isArray(selPorts) && selPorts.length) {
+      selPorts.forEach(p => {
+        delete portInfo[p];
+      });
+      localStorage.setItem('portInfo', JSON.stringify(portInfo));
+    } else {
+      portInfo = {};
+      localStorage.removeItem('portInfo');
+    }
+    renderTable();
+  }
+
   // Показываем/скрываем полное значение ячейки при клике
   table.addEventListener('click', e => {
     const td = e.target.closest('td[data-full]');
@@ -351,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (action === 'disconnect') {
         log('disconnected');
-        clearModemData(ports);
+        clearPortInfo(ports);
       }
     })
     .catch(err => log(`${action} error: ${err}`));
