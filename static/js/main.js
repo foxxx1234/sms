@@ -85,9 +85,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Обновить строки таблицы данными модемов
   //
   function updateRows(results) {
+    let added = false;
     Object.keys(results).forEach(port => {
-      const row = tbody.querySelector(`tr[data-port="${port}"]`);
-      if (!row) return;
+      let row = tbody.querySelector(`tr[data-port="${port}"]`);
+      if (!row) {
+        const tr = document.createElement('tr');
+        tr.dataset.port = port;
+        let html = '<td><input type="checkbox" class="sel"></td>';
+        for (let key in labelsTrans) {
+          const val = key === 'port' ? port : '—';
+          html += `<td class="${key}">${val}</td>`;
+        }
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+        row = tr;
+        allPorts.push(port);
+        added = true;
+      }
       const info = results[port];
       Object.keys(labelsTrans).forEach(key => {
         const cell = row.querySelector(`td.${key}`);
@@ -96,6 +110,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+    if (added) {
+      const rows = tbody.querySelectorAll('tr');
+      const container = document.querySelector('section.modem-section');
+      if (rows.length && container) {
+        const rowHeight = rows[0].getBoundingClientRect().height;
+        if (rows.length > displayedCount) {
+          container.style.maxHeight = (rowHeight * displayedCount) + 'px';
+          container.style.overflowY = 'auto';
+        } else {
+          container.style.maxHeight = '';
+          container.style.overflowY = 'visible';
+        }
+      }
+    }
   }
 
   // делаем функцию глобальной, чтобы её вызывал contextMenu.js
