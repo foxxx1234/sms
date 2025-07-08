@@ -51,6 +51,16 @@
   "no_modems_found": {
     "ru":"Модемы не найдены.","en":"No modems found.","zh":"未找到调制解调器。"
   },
+  "signal": {
+    "error": {"ru":"Нет данных","en":"No data","zh":"无数据"},
+    "none":  {"ru":"Нет сигнала","en":"No signal","zh":"无信号"},
+    "bad":   {"ru":"Плохой","en":"Bad","zh":"差"},
+    "medium":{"ru":"Средний","en":"Medium","zh":"中"},
+    "good":  {"ru":"Хороший","en":"Good","zh":"好"}
+  },
+  "status": {
+    "no_response": {"ru":"Нет ответа","en":"No response","zh":"无响应"}
+  },
   "rules_fields": {
     "pattern": { "ru":"Шаблон","en":"Pattern","zh":"模式" },
     "extract": { "ru":"Индекс","en":"Extract Index","zh":"提取索引" }
