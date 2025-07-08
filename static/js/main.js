@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   //
   function renderTable() {
     tbody.innerHTML = '';
-    const subset = allPorts.slice(0, displayedCount);
+    const subset = allPorts;
     subset.forEach(port => {
       const tr = document.createElement('tr');
       tr.dataset.port = port;
@@ -70,7 +70,20 @@ document.addEventListener('DOMContentLoaded', () => {
       tr.innerHTML = html;
       tbody.appendChild(tr);
     });
-    log(`Rendered ${Math.min(displayedCount, allPorts.length)} of ${allPorts.length} ports`);
+    // Ограничиваем высоту таблицы 20 строками, если портов больше
+    const rows = tbody.querySelectorAll('tr');
+    const container = document.querySelector('section.modem-section');
+    if (rows.length && container) {
+      const rowHeight = rows[0].getBoundingClientRect().height;
+      if (rows.length > displayedCount) {
+        container.style.maxHeight = (rowHeight * displayedCount) + 'px';
+        container.style.overflowY = 'auto';
+      } else {
+        container.style.maxHeight = '';
+        container.style.overflowY = 'visible';
+      }
+    }
+    log(`Rendered ${subset.length} ports`);
   }
 
   //
