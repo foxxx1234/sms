@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabBtns         = document.querySelectorAll('nav.tabs-menu .tab-btn');
   const contentSections = document.querySelectorAll('main#main-content section');
   const columnsPanel    = document.getElementById('columns-panel');
+  function openLogSettings() {
+    alert('Log settings are not implemented yet');
+  }
 
   //
   // Хранилище и состояние
@@ -71,14 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
   //
   // Добавить строку в лог
   //
-  function log(msg) {
+  function log(msg, port = null) {
     const line = document.createElement('div');
     const ts   = new Date().toLocaleTimeString();
     line.textContent = `[${ts}] ${msg}`;
     logEntries.appendChild(line);
     logEntries.scrollTop = logEntries.scrollHeight;
     if (fileLogCb.checked) {
-      // TODO: отправить на сервер для записи в файл (API)
+      fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `[${ts}] ${msg}`, port })
+      }).catch(() => {});
     }
   }
 
@@ -269,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                   const info = JSON.parse(data);
                   updateRows({ [info.port]: info });
-                  log(`connect: ${info.port}`);
+                  log(`connect: ${info.port}`, info.port);
                 } catch (e) {
                   console.error(e);
                 }
@@ -452,9 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Лог: показать / скрыть
+  // Лог: настройки
   logToggleBtn.addEventListener('click', () => {
-    document.getElementById('log-panel').classList.toggle('hidden');
+    openLogSettings();
   });
   // Лог: очистить
   clearLogBtn.addEventListener('click', () => {

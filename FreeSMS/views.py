@@ -2,6 +2,7 @@
 
 import json
 import time
+import os
 from flask import (
     render_template, request, jsonify, make_response, current_app
 )
@@ -212,7 +213,7 @@ def api_connect():
                     if "port" not in info:
                         info["port"] = p
                     yield f"data: {json.dumps(info)}\n\n"
-                time.sleep(2)
+                time.sleep(0.5)
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
@@ -233,7 +234,7 @@ def api_connect():
                     if "port" not in info:
                         info["port"] = p
                     yield f"data: {json.dumps(info)}\n\n"
-                time.sleep(2)
+                time.sleep(0.5)
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
@@ -311,6 +312,24 @@ def api_set_port_number():
 @app.route("/api/reboot_port", methods=["POST"])
 def api_reboot_port():
     return jsonify(success=True)
+
+@app.route("/api/log", methods=["POST"])
+def api_log():
+    data = request.get_json(force=True) or {}
+    msg = data.get("message")
+    port = data.get("port")
+    if not msg:
+        return jsonify(success=False, error="no message"), 400
+    try:
+        log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        fname = f"{port}.log" if port else "app.log"
+        path = os.path.join(log_dir, fname)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(msg + "\n")
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
 
 @app.route("/api/activate_sim_pool_number", methods=["POST"])
 def api_activate_sim_pool_number():
