@@ -64,6 +64,9 @@ nav.main-menu .menu-btn:hover {
 nav.main-menu .menu-btn:active {
   background: #1f6391;
 }
+nav.main-menu .menu-btn.active-state {
+  background: #1f6391;
+}
 
 /* Подменю (вкладки) */
 nav.tabs-menu {
@@ -177,4 +180,8 @@ section.modem-section::-webkit-scrollbar {
 section.modem-section::-webkit-scrollbar-thumb {
   background: #95a5a6;
   border-radius: 4px;
+}
+
+.hidden {
+  display: none !important;
 }

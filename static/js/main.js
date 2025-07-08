@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const logEntries      = document.getElementById('log-entries');
   const langBtns        = document.querySelectorAll('.lang-btn');
   const menuBtns        = document.querySelectorAll('nav.main-menu .menu-btn');
+  const connectBtn      = document.querySelector('nav.main-menu .menu-btn[data-action="connect"]');
+  const disconnectBtn   = document.querySelector('nav.main-menu .menu-btn[data-action="disconnect"]');
   const tabBtns         = document.querySelectorAll('nav.tabs-menu .tab-btn');
   const contentSections = document.querySelectorAll('main#main-content section');
 
@@ -34,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let sortKey        = null;
   let sortDir        = 1;  // 1 = возрастание, -1 = убывание
   let portInfo       = {};
+  let connectController = null;
 
   //
   // Добавить строку в лог
@@ -171,6 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const ports = selected.length ? selected : allPorts;
 
     if (action === 'connect') {
+      if (connectController) connectController.abort();
+      connectController = new AbortController();
+      connectBtn.classList.add('active-state');
+      disconnectBtn.classList.remove('active-state');
 
       fetch('/api/connect', {
         method: 'POST',
@@ -178,7 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
           'Accept': 'text/event-stream'
         },
-        body: JSON.stringify({ ports })
+        body: JSON.stringify({ ports }),
+        signal: connectController.signal
       })
       .then(async res => {
         if (res.ok && res.headers.get('Content-Type')?.startsWith('text/event-stream')) {
@@ -225,6 +233,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return; // handled via streamed POST response only
     }
 
+    if (action === 'disconnect') {
+      if (connectController) {
+        connectController.abort();
+        connectController = null;
+      }
+      disconnectBtn.classList.add('active-state');
+      connectBtn.classList.remove('active-state');
+    }
+
     fetch(`/api/${action}`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -236,6 +253,13 @@ document.addEventListener('DOMContentLoaded', () => {
         log(`${action}: ${res.ports.join(', ')}`);
       } else {
         log(`${action}: ${JSON.stringify(res)}`);
+      }
+
+      if (action === 'disconnect') {
+        allPorts = [];
+        portInfo = {};
+        localStorage.removeItem('portInfo');
+        renderTable();
       }
     })
     .catch(err => log(`${action} error: ${err}`));
@@ -311,10 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Connect / Disconnect в меню
-  document.querySelector('nav.main-menu .menu-btn[data-action="connect"]')
-    .addEventListener('click', () => doAction('connect'));
-  document.querySelector('nav.main-menu .menu-btn[data-action="disconnect"]')
-    .addEventListener('click', () => doAction('disconnect'));
+  connectBtn.addEventListener('click', () => doAction('connect'));
+  disconnectBtn.addEventListener('click', () => doAction('disconnect'));
 
   // Заглушки для остальных действий
   ['ussd','port_find','port_sort','settings'].forEach(act => {
