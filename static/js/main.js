@@ -29,10 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileLogCb       = document.getElementById('file-log');
   const logEntries      = document.getElementById('log-entries');
   const langBtns        = document.querySelectorAll('.lang-btn');
-  const menuBtns        = document.querySelectorAll('nav.main-menu .menu-btn');
+  const menuBtns        = document.querySelectorAll('.menu-btn');
   const connectBtn      = document.querySelector('nav.main-menu .menu-btn[data-action="connect"]');
   const disconnectBtn   = document.querySelector('nav.main-menu .menu-btn[data-action="disconnect"]');
-  const columnsBtn      = document.querySelector('nav.main-menu .menu-btn[data-action="columns"]');
+  const columnsBtns     = document.querySelectorAll('.menu-btn[data-action="columns"]');
   const tabBtns         = document.querySelectorAll('nav.tabs-menu .tab-btn');
   const contentSections = document.querySelectorAll('main#main-content section');
   const columnsPanel    = document.getElementById('columns-panel');
@@ -59,9 +59,18 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scriptsDisabled = scriptsDisabled;
   }
 
-  function clearModemData() {
-    portInfo = {};
-    localStorage.removeItem('portInfo');
+  function clearModemData(selPorts = null) {
+    if (Array.isArray(selPorts) && selPorts.length) {
+      selPorts.forEach(p => {
+        delete portInfo[p];
+        allPorts = allPorts.filter(port => port !== p);
+      });
+      localStorage.setItem('portInfo', JSON.stringify(portInfo));
+    } else {
+      portInfo = {};
+      allPorts = [];
+      localStorage.removeItem('portInfo');
+    }
     renderTable();
   }
 
@@ -342,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (action === 'disconnect') {
         log('disconnected');
-        clearModemData();
+        clearModemData(ports);
       }
     })
     .catch(err => log(`${action} error: ${err}`));
@@ -409,7 +418,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Главное меню
     menuBtns.forEach(b => {
       const act = b.dataset.action;
-      b.textContent = buttonsTrans[act][currentLang];
+      if (act && buttonsTrans[act]) {
+        b.textContent = buttonsTrans[act][currentLang];
+      }
     });
     // Вкладки
     tabBtns.forEach(b => {
@@ -454,12 +465,14 @@ document.addEventListener('DOMContentLoaded', () => {
       .addEventListener('click', () => alert(`${act} not implemented yet`));
   });
 
-  if (columnsBtn && columnsPanel) {
-    columnsBtn.addEventListener('click', () => {
-      if (columnsPanel.classList.contains('hidden')) {
-        initColumnPanel();
-      }
-      columnsPanel.classList.toggle('hidden');
+  if (columnsBtns.length && columnsPanel) {
+    columnsBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (columnsPanel.classList.contains('hidden')) {
+          initColumnPanel();
+        }
+        columnsPanel.classList.toggle('hidden');
+      });
     });
 
     columnsPanel.addEventListener('change', e => {
