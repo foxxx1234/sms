@@ -6,6 +6,7 @@
     <div class="table-controls">
       <button class="menu-btn" id="columns-table-btn" data-action="columns">{{ buttons.columns[lang] }}</button>
     </div>
+    <div id="columns-panel" class="hidden column-panel"></div>
     <table id="modem-table">
       <colgroup>
         <col class="col-select">
@@ -46,7 +47,6 @@
         {% endif %}
       </tbody>
     </table>
-    <div id="columns-panel" class="hidden column-panel"></div>
   </section>
 
   {# Лог действий и управление #}
