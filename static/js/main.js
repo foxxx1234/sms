@@ -224,21 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => log(`connect error: ${err}`));
 
-      const params = new URLSearchParams();
-      ports.forEach(p => params.append('ports', p));
-      const es = new EventSource(`/api/connect?${params.toString()}`);
-      es.onmessage = ev => {
-        try {
-          const info = JSON.parse(ev.data);
-          updateRows({ [info.port]: info });
-          log(`connect: ${info.port}`);
-        } catch (e) {
-          console.error(e);
-        }
-      };
-      es.onerror = () => es.close();
-
-      return;
+      return; // handled via streamed POST response only
     }
 
     fetch(`/api/${action}`, {
