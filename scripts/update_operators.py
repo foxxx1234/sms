@@ -1,22 +1,31 @@
 import json
+import re
 import requests
 import pycountry
 
-# Source with up‑to‑date MCC/MNC information.  The atis-- dataset provides MCC
-# and MNC codes along with two-letter country codes.  We convert those to
-# three-letter ISO codes.
-URL = "https://raw.githubusercontent.com/atis--/mccmnc.json/master/mccmnc.json"
+# Source with up‑to‑date MCC/MNC information.  The jsDelivr dataset is
+# distributed as an ES module where the default export is a JSON array of
+# objects describing MCC/MNC pairs.  We convert that list to our
+# operators.json format (three‑letter country codes and slugified operator
+# names).
+URL = "https://cdn.jsdelivr.net/npm/mccmnc.json@1.2.0/+esm"
 
 
 def fetch_operator_data():
     """Download raw MCC/MNC data from the remote table."""
     resp = requests.get(URL, timeout=30)
     resp.raise_for_status()
-    return resp.json()
+    text = resp.text.strip()
+    # jsDelivr serves the file as an ES module: `export default [...];`
+    if text.startswith("export default"):
+        text = text[len("export default") :].strip()
+    if text.endswith(";"):
+        text = text[:-1].strip()
+    return json.loads(text)
 
 
 def generate_ops_list(data):
-    """Convert raw JSON from the atis-- table to operators.json format."""
+    """Convert raw JSON from the jsDelivr dataset to operators.json format."""
     result = []
     # The atis-- dataset may be either a list or a mapping keyed by MCC/MNC.
     entries = data.values() if isinstance(data, dict) else data
@@ -60,7 +69,7 @@ def generate_ops_list(data):
             continue
 
         country_code = country.alpha_3.lower()
-        operator_code = operator_name.lower().replace(" ", "-")
+        operator_code = re.sub(r"\s+", "-", operator_name.strip().lower())
         result.append({
             "mcc": str(mcc),
             "mnc": str(mnc),
