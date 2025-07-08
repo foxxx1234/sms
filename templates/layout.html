@@ -15,6 +15,7 @@
     window.buttons = {{ buttons | tojson }};
     window.tabs    = {{ tabs    | tojson }};
     window.labels  = {{ labels_all | tojson }};
+    window.colKeys = {{ hdr_keys | tojson if hdr_keys is defined else '[]' }};
   </script>
 
   <!-- Скрипты -->

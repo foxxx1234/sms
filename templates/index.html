@@ -8,7 +8,8 @@
         <tr>
           <th><input type="checkbox" id="select-all"></th>
           {# Заголовки столбцов из translations.json #}
-          {% for key, label in labels.items() %}
+          {% for key in hdr_keys %}
+            {% set label = labels[key] %}
             <th class="sortable" data-key="{{ key }}">{{ label }}</th>
           {% endfor %}
         </tr>
@@ -19,7 +20,7 @@
           {% for port in ports %}
             <tr data-port="{{ port }}">
               <td><input type="checkbox" class="sel"></td>
-              {% for key in labels.keys() %}
+              {% for key in hdr_keys %}
                 <td class="{{ key }}">{{ key == 'port' and port or '—' }}</td>
               {% endfor %}
             </tr>
@@ -28,7 +29,7 @@
           {% for _ in range(20) %}
             <tr>
               <td><input type="checkbox" class="sel" disabled></td>
-              {% for key in labels.keys() %}
+              {% for key in hdr_keys %}
                 <td class="{{ key }}">—</td>
               {% endfor %}
             </tr>
