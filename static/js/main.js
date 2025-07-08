@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let added = false;
     Object.keys(results).forEach(port => {
       let row = tbody.querySelector(`tr[data-port="${port}"]`);
+
       if (!row) {
         const tr = document.createElement('tr');
         tr.dataset.port = port;
@@ -102,13 +103,31 @@ document.addEventListener('DOMContentLoaded', () => {
         allPorts.push(port);
         added = true;
       }
+
+
       const info = results[port];
-      Object.keys(labelsTrans).forEach(key => {
-        const cell = row.querySelector(`td.${key}`);
-        if (cell && info[key] !== undefined) {
-          cell.textContent = info[key];
+      // Если строки нет, добавляем новую
+      if (!row) {
+        row = document.createElement('tr');
+        row.dataset.port = port;
+        let html = '<td><input type="checkbox" class="sel"></td>';
+        Object.keys(labelsTrans).forEach(key => {
+          const val = key === 'port' ? port : (info[key] !== undefined ? info[key] : '—');
+          html += `<td class="${key}">${val}</td>`;
+        });
+        row.innerHTML = html;
+        tbody.appendChild(row);
+        if (!allPorts.includes(port)) {
+          allPorts.push(port);
         }
-      });
+      } else {
+        Object.keys(labelsTrans).forEach(key => {
+          const cell = row.querySelector(`td.${key}`);
+          if (cell && info[key] !== undefined) {
+            cell.textContent = info[key];
+          }
+        });
+      }
     });
     if (added) {
       const rows = tbody.querySelectorAll('tr');
