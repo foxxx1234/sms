@@ -19,6 +19,7 @@
     "imei":        { "ru":"IMEI","en":"IMEI","zh":"IMEI" },
     "iccid":       { "ru":"ICCID","en":"ICCID","zh":"ICCID" },
     "cpin":        { "ru":"CPIN","en":"CPIN","zh":"CPIN" },
+    "phone":       { "ru":"Телефон","en":"Phone","zh":"电话" },
     "ussd":        { "ru":"USSD","en":"USSD","zh":"USSD" }
   },
   "buttons": {
