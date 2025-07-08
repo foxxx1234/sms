@@ -121,6 +121,11 @@ section.modem-section {
   text-overflow: ellipsis;
   cursor: pointer;           /* по клику показываем полное значение */
 }
+#modem-table td.expanded {
+  white-space: normal;
+  max-width: none;
+  overflow: visible;
+}
 #modem-table th.sortable {
   cursor: pointer;
 }
