@@ -7,6 +7,7 @@ from flask import (
     render_template, request, jsonify, make_response, current_app
 )
 from . import app
+from . import event_logger
 from .modem_utils import list_modem_ports, get_modem_info
 from .i18n import t, get_language, set_language
 
@@ -211,6 +212,7 @@ def api_connect():
                     info = {"port": p, "status": str(e)}
                 if "port" not in info:
                     info["port"] = p
+                event_logger.log_event("port_connected", port=p)
                 yield f"data: {json.dumps(info)}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
@@ -230,6 +232,7 @@ def api_connect():
                     info = {"port": p, "status": str(e)}
                 if "port" not in info:
                     info["port"] = p
+                event_logger.log_event("port_connected", port=p)
                 yield f"data: {json.dumps(info)}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
@@ -241,12 +244,15 @@ def api_connect():
             results[p] = get_modem_info(p, lang)
         except Exception as e:
             results[p] = {"error": str(e)}
+        event_logger.log_event("port_connected", port=p)
     return jsonify(success=True, ports=ports, results=results)
 
 @app.route("/api/disconnect", methods=["POST"])
 def api_disconnect():
     data = request.get_json(force=True) or {}
     sel = data.get("ports") or list_modem_ports()
+    for p in sel:
+        event_logger.log_event("port_disconnected", port=p)
     return jsonify(success=True, ports=sel)
 
 @app.route("/api/port_find", methods=["POST"])
@@ -271,6 +277,11 @@ def api_sms_content():
 
 @app.route("/api/send_sms", methods=["POST"])
 def api_send_sms():
+    data = request.get_json(force=True) or {}
+    port = data.get("port")
+    phone = data.get("phone")
+    text = data.get("text", "")
+    event_logger.log_event("sms_outgoing", port=port, phone=phone, details=text)
     return jsonify(success=True)
 
 @app.route("/api/sms_status", methods=["GET"])
@@ -323,6 +334,7 @@ def api_log():
         path = os.path.join(log_dir, fname)
         with open(path, "a", encoding="utf-8") as f:
             f.write(msg + "\n")
+        event_logger.log_event("log", port=port, details=msg)
         return jsonify(success=True)
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
