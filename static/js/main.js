@@ -52,21 +52,16 @@ document.addEventListener('DOMContentLoaded', () => {
   //
   function renderTable() {
     tbody.innerHTML = '';
-    const subset = allPorts;
+    const subset = allPorts.length ? allPorts : Array.from({length: displayedCount}, () => null);
     subset.forEach(port => {
       const tr = document.createElement('tr');
-      tr.dataset.port = port;
+      if (port) tr.dataset.port = port;
       let html = '';
-      html += `<td><input type="checkbox" class="sel"></td>`;
+      html += `<td><input type="checkbox" class="sel"${port ? '' : ' disabled'}></td>`;
       for (let key in labelsTrans) {
-        // порт — единственное поле, у остальных пока дефолт
-        const val = (key === 'port') ? port : '—';
+        const val = (key === 'port' && port) ? port : '—';
         html += `<td class="${key}">${val}</td>`;
       }
-      html += `<td class="row-actions">
-        <button class="btn-connect">${buttonsTrans.connect[currentLang]}</button>
-        <button class="btn-disconnect">${buttonsTrans.disconnect[currentLang]}</button>
-      </td>`;
       tr.innerHTML = html;
       tbody.appendChild(tr);
     });
@@ -191,16 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
     thead.querySelectorAll('th.sortable').forEach(th => {
       const key = th.dataset.key;
       th.textContent = labelsTrans[key][currentLang];
-    });
-    // Последний заголовок — «Действия»
-    const lastTh = thead.querySelector('th:last-child');
-    lastTh.textContent = `${buttonsTrans.connect[currentLang]}/${buttonsTrans.disconnect[currentLang]}`;
-    // Кнопки в строках
-    tbody.querySelectorAll('.btn-connect').forEach(btn => {
-      btn.textContent = buttonsTrans.connect[currentLang];
-    });
-    tbody.querySelectorAll('.btn-disconnect').forEach(btn => {
-      btn.textContent = buttonsTrans.disconnect[currentLang];
     });
   }
 
