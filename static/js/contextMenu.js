@@ -20,6 +20,7 @@ const menuItems = [
   { action: "ussd", labelKey: "ussd" },
   { action: "port_find", labelKey: "port_find" },
   { action: "port_sort", labelKey: "port_sort" },
+  { action: "reload_ports", labelKey: "reload_ports" },
   { action: "settings", labelKey: "settings" },
 ];
 
@@ -67,6 +68,8 @@ function showContextMenu(x, y, port, buttons, lang) {
         openPortFindModal([port]);
       } else if (action === "port_sort") {
         openPortSortModal();
+      } else if (action === "reload_ports") {
+        if (typeof window.loadPorts === 'function') window.loadPorts();
       } else if (action === "settings") {
         openSettingsModal();
       }

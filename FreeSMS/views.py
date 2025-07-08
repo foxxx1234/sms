@@ -212,7 +212,7 @@ def api_connect():
                     if "port" not in info:
                         info["port"] = p
                     yield f"data: {json.dumps(info)}\n\n"
-                time.sleep(5)
+                time.sleep(2)
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
@@ -233,7 +233,7 @@ def api_connect():
                     if "port" not in info:
                         info["port"] = p
                     yield f"data: {json.dumps(info)}\n\n"
-                time.sleep(5)
+                time.sleep(2)
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 

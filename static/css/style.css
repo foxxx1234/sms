@@ -154,6 +154,18 @@ section.modem-section {
   transform: scale(1.2);
 }
 
+/* Панель управления столбцами */
+.column-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+.column-panel label {
+  white-space: nowrap;
+}
+
 /* Лог действий */
 #log-panel {
   margin-top: 1.5rem;

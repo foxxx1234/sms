@@ -29,6 +29,8 @@
     "port_find":  { "ru":"Найти порт","en":"Port Find","zh":"查找端口" },
     "port_sort":  { "ru":"Сортировка портов","en":"Port Sort","zh":"排序端口" },
     "settings":   { "ru":"Настройки","en":"Settings","zh":"设置" },
+    "columns":    { "ru":"Столбцы","en":"Columns","zh":"列" },
+    "reload_ports": { "ru":"Перезагрузить порты","en":"Reload Ports","zh":"重新加载端口" },
     "add_rule":   { "ru":"Добавить правило","en":"Add Rule","zh":"添加规则" },
     "edit":       { "ru":"Изменить","en":"Edit","zh":"编辑" },
     "delete":     { "ru":"Удалить","en":"Delete","zh":"删除" },

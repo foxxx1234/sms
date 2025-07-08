@@ -32,8 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuBtns        = document.querySelectorAll('nav.main-menu .menu-btn');
   const connectBtn      = document.querySelector('nav.main-menu .menu-btn[data-action="connect"]');
   const disconnectBtn   = document.querySelector('nav.main-menu .menu-btn[data-action="disconnect"]');
+  const columnsBtn      = document.querySelector('nav.main-menu .menu-btn[data-action="columns"]');
   const tabBtns         = document.querySelectorAll('nav.tabs-menu .tab-btn');
   const contentSections = document.querySelectorAll('main#main-content section');
+  const columnsPanel    = document.getElementById('columns-panel');
 
   //
   // Хранилище и состояние
@@ -45,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let portInfo       = {};
   let connectController = null;
   let expandedCount  = 0;
+  let hiddenCols     = [];
 
   // Показываем/скрываем полное значение ячейки при клике
   table.addEventListener('click', e => {
@@ -127,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     log(`Rendered ${subset.length} ports`);
+    applyHiddenColumns();
   }
 
   //
@@ -222,6 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(err => log(`Scan error: ${err}`));
   }
 
+  window.loadPorts = loadPorts;
+
   //
   // Выполнить connect / disconnect
   //
@@ -313,10 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (action === 'disconnect') {
-        allPorts = [];
-        portInfo = {};
-        localStorage.removeItem('portInfo');
-        renderTable();
+        log('disconnected');
       }
     })
     .catch(err => log(`${action} error: ${err}`));
@@ -353,6 +356,29 @@ document.addEventListener('DOMContentLoaded', () => {
     log(`Sorted by ${key} (${sortDir>0?'asc':'desc'})`);
   }
 
+  function setColumnVisibility(key, visible) {
+    const col = table.querySelector(`colgroup col[data-key="${key}"]`);
+    const th  = thead.querySelector(`th[data-key="${key}"]`);
+    const cells = tbody.querySelectorAll(`td.${key}`);
+    [col, th, ...cells].forEach(el => { if (el) el.style.display = visible ? '' : 'none'; });
+  }
+
+  function applyHiddenColumns() {
+    columnKeys.forEach(k => setColumnVisibility(k, !hiddenCols.includes(k)));
+  }
+
+  function initColumnPanel() {
+    if (!columnsPanel) return;
+    columnsPanel.innerHTML = '';
+    columnKeys.forEach(key => {
+      const lbl = labelsTrans[key][currentLang] || key;
+      const checked = !hiddenCols.includes(key);
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" data-col="${key}"${checked ? ' checked' : ''}> ${lbl}`;
+      columnsPanel.appendChild(label);
+    });
+  }
+
   //
   // Обновить все тексты на странице по новому языку
   //
@@ -372,6 +398,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const key = th.dataset.key;
       th.textContent = labelsTrans[key][currentLang];
     });
+    if (columnsPanel && !columnsPanel.classList.contains('hidden')) {
+      initColumnPanel();
+    }
   }
 
   //
@@ -400,6 +429,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector(`nav.main-menu .menu-btn[data-action="${act}"]`)
       .addEventListener('click', () => alert(`${act} not implemented yet`));
   });
+
+  if (columnsBtn && columnsPanel) {
+    columnsBtn.addEventListener('click', () => {
+      if (columnsPanel.classList.contains('hidden')) {
+        initColumnPanel();
+      }
+      columnsPanel.classList.toggle('hidden');
+    });
+
+    columnsPanel.addEventListener('change', e => {
+      const cb = e.target.closest('input[data-col]');
+      if (!cb) return;
+      const key = cb.dataset.col;
+      if (cb.checked) {
+        hiddenCols = hiddenCols.filter(k => k !== key);
+      } else {
+        if (!hiddenCols.includes(key)) hiddenCols.push(key);
+      }
+      localStorage.setItem('hiddenCols', JSON.stringify(hiddenCols));
+      setColumnVisibility(key, cb.checked);
+    });
+  }
 
   // Лог: показать / скрыть
   logToggleBtn.addEventListener('click', () => {
@@ -494,6 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (colMap[key]) colgroup.appendChild(colMap[key]);
       if (thMap[key]) tr.appendChild(thMap[key]);
     });
+    applyHiddenColumns();
   }
 
   function initColumnResizers() {
@@ -533,6 +585,8 @@ document.addEventListener('DOMContentLoaded', () => {
       portInfo = JSON.parse(saved);
       allPorts = Object.keys(portInfo);
     }
+    const hid = localStorage.getItem('hiddenCols');
+    if (hid) hiddenCols = JSON.parse(hid);
   } catch (e) {}
 
   renderTable();
