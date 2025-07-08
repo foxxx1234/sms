@@ -171,6 +171,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const selected = Array.from(tbody.querySelectorAll('.sel:checked'))
                           .map(cb => cb.closest('tr').dataset.port);
     const ports = selected.length ? selected : allPorts;
+
+    if (action === 'connect') {
+      const params = new URLSearchParams();
+      ports.forEach(p => params.append('ports', p));
+      const es = new EventSource(`/api/connect?${params.toString()}`);
+      es.onmessage = ev => {
+        try {
+          const info = JSON.parse(ev.data);
+          updateRows({ [info.port]: info });
+          log(`connect: ${info.port}`);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      es.onerror = () => es.close();
+      return;
+    }
+
     fetch(`/api/${action}`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -178,11 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(r => r.json())
     .then(res => {
-      // API на connect возвращает { success:true, results: {...} }
-      if (action === 'connect' && res.results) {
-        updateRows(res.results);
-        log(`${action}: ${Object.keys(res.results).join(', ')}`);
-      } else if (res.ports) {
+      if (res.ports) {
         log(`${action}: ${res.ports.join(', ')}`);
       } else {
         log(`${action}: ${JSON.stringify(res)}`);
