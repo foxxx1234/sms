@@ -166,6 +166,25 @@ section.modem-section {
   white-space: nowrap;
 }
 
+/* Кнопка управления столбцами справа от таблицы */
+.table-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+.table-controls .menu-btn {
+  background: #3498db;
+  border: none;
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.85rem;
+}
+.table-controls .menu-btn:hover {
+  background: #2980b9;
+}
+
 /* Лог действий */
 #log-panel {
   margin-top: 1.5rem;
