@@ -38,6 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let portInfo       = {};
   let connectController = null;
 
+  // Показываем полное значение ячейки по клику
+  table.addEventListener('click', e => {
+    const td = e.target.closest('td[data-full]');
+    if (!td || td.querySelector('input')) return;
+    alert(td.dataset.full);
+  });
+
   //
   // Добавить строку в лог
   //
@@ -72,9 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
             val = portInfo[port][key];
           }
         }
-        html += `<td class="${key}">${val}</td>`;
+        html += `<td class="${key}" data-full="${val}">${val}</td>`;
       });
       tr.innerHTML = html;
+      // обрезаем длинные значения
+      tr.querySelectorAll('td[data-full]').forEach(td => {
+        const full = td.dataset.full;
+        if (full.length > 15) {
+          td.textContent = full.slice(0, 15) + '…';
+        }
+      });
       tbody.appendChild(tr);
     });
     // Ограничиваем высоту таблицы 20 строками, если портов больше
@@ -108,9 +122,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '<td><input type="checkbox" class="sel"></td>';
         columnKeys.forEach(key => {
           const val = key === 'port' ? port : (results[port][key] !== undefined ? results[port][key] : '—');
-          html += `<td class="${key}">${val}</td>`;
+          html += `<td class="${key}" data-full="${val}">${val}</td>`;
         });
         tr.innerHTML = html;
+        tr.querySelectorAll('td[data-full]').forEach(td => {
+          const full = td.dataset.full;
+          if (full.length > 15) td.textContent = full.slice(0,15) + '…';
+        });
         tbody.appendChild(tr);
         row = tr;
         if (!allPorts.includes(port)) {
@@ -121,7 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
         columnKeys.forEach(key => {
           const cell = row.querySelector(`td.${key}`);
           if (cell && results[port][key] !== undefined) {
-            cell.textContent = results[port][key];
+            const fullVal = results[port][key];
+            cell.dataset.full = fullVal;
+            cell.textContent = fullVal.toString().length > 15 ? fullVal.toString().slice(0,15) + '…' : fullVal;
           }
         });
       }

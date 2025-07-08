@@ -53,6 +53,23 @@ def send_at_command(port, command, timeout=1.0):
         return ""
 
 
+def extract_data(response: str) -> str:
+    """Возвращает только полезные данные из ответа модема."""
+    if not response:
+        return ""
+    text = response.strip()
+    text = re.sub(r'^AT[^\n]*\n', '', text, flags=re.IGNORECASE)
+    text = text.replace('\r', '').replace('\n', ' ').strip()
+    if text.upper().endswith('OK'):
+        text = text[:-2].strip()
+    m = re.search(r'\+[^:]+:\s*"?([^" ]+)"?', text)
+    if m:
+        return m.group(1).strip()
+    if text.startswith('+'):
+        text = text[1:].strip()
+    return text
+
+
 def parse_signal(response, lang):
     """
     Разбирает ответ '+CSQ: <rssi>,<ber>' и возвращает 'rssi (quality)',
@@ -118,11 +135,11 @@ def get_modem_info(port, lang=None):
     info["status"] = "OK" if "OK" in at_ok else t("status.no_response", lang)
 
     # Основные данные
-    info["model"] = send_at_command(port, "AT+CGMM").strip() or "—"
-    info["vendor"] = send_at_command(port, "AT+CGMI").strip() or "—"
+    info["model"] = extract_data(send_at_command(port, "AT+CGMM")) or "—"
+    info["vendor"] = extract_data(send_at_command(port, "AT+CGMI")) or "—"
 
     # IMSI → оператор и страна SIM
-    imsi = send_at_command(port, "AT+CIMI").strip()
+    imsi = extract_data(send_at_command(port, "AT+CIMI"))
     info["imsi"] = imsi or "—"
     info["operator"] = get_operator_from_imsi(imsi) or "—"
     info["sim_country"] = get_country_from_imsi(imsi) or "—"
@@ -137,10 +154,10 @@ def get_modem_info(port, lang=None):
     info["signal"] = parse_signal(csq, lang)
 
     # Дополнительные данные
-    info["imei"] = send_at_command(port, "AT+CGSN").strip() or "—"
-    info["iccid"] = send_at_command(port, "AT+CCID").strip() or "—"
-    cpin = send_at_command(port, "AT+CPIN?").strip()
-    info["cpin"] = cpin.replace("CPIN:", "").strip() if cpin else "—"
+    info["imei"] = extract_data(send_at_command(port, "AT+CGSN")) or "—"
+    info["iccid"] = extract_data(send_at_command(port, "AT+CCID")) or "—"
+    cpin = extract_data(send_at_command(port, "AT+CPIN?"))
+    info["cpin"] = cpin or "—"
 
     # Номер телефона SIM-карты
     phone_resp = send_at_command(port, "AT+CNUM").strip()

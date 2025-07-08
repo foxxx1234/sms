@@ -104,6 +104,7 @@ section.modem-section {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  table-layout: fixed; /* не растягиваем таблицу */
 }
 #modem-table thead {
   background: #34495e;
@@ -115,6 +116,10 @@ section.modem-section {
   border: 1px solid #ddd;
   text-align: center;
   white-space: nowrap;
+  max-width: 15ch;           /* показываем не больше 15 символов */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;           /* по клику показываем полное значение */
 }
 #modem-table th.sortable {
   cursor: pointer;
