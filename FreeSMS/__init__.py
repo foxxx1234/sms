@@ -9,8 +9,7 @@ app = Flask(
 )
 
 app.config.from_file(os.path.join(BASE, "../config.json"), load=json.load)
-app.config['TRANSLATIONS'] = json.load(
-    open(os.path.join(BASE, "../translations.json"), encoding="utf-8")
-)
+with open(os.path.join(BASE, "../translations.json"), encoding="utf-8") as fh:
+    app.config['TRANSLATIONS'] = json.load(fh)
 
 import FreeSMS.views
