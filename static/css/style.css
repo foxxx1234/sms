@@ -222,3 +222,12 @@ section.modem-section::-webkit-scrollbar-thumb {
 .hidden {
   display: none !important;
 }
+body.scripts-disabled * {
+  pointer-events: none;
+}
+body.scripts-disabled .sel,
+body.scripts-disabled #select-all,
+body.scripts-disabled nav.main-menu .menu-btn[data-action="connect"],
+body.scripts-disabled nav.main-menu .menu-btn[data-action="disconnect"] {
+  pointer-events: auto;
+}
