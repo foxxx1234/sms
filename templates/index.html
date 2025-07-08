@@ -1,0 +1,52 @@
+{# templates/index.html #}
+{% extends "layout.html" %}
+
+{% block content %}
+  <section class="modem-section">
+    <table id="modem-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="select-all"></th>
+          {# Заголовки столбцов из translations.json #}
+          {% for key, label in labels.items() %}
+            <th class="sortable" data-key="{{ key }}">{{ label }}</th>
+          {% endfor %}
+          <th>{{ buttons.connect[lang] }}/{{ buttons.disconnect[lang] }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if ports %}
+          {# Показываем первые 20 строк, остальные доступны по скроллу #}
+          {% for port in ports[:20] %}
+            <tr data-port="{{ port }}">
+              <td><input type="checkbox" class="sel"></td>
+              {% for key in labels.keys() %}
+                <td class="{{ key }}">{{ key == 'port' and port or '—' }}</td>
+              {% endfor %}
+              <td class="row-actions">
+                <button class="btn-connect">{{ buttons.connect[lang] }}</button>
+                <button class="btn-disconnect">{{ buttons.disconnect[lang] }}</button>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="{{ labels|length + 2 }}" class="no-modems">
+              {{ t("no_modems_found", lang) }}
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </section>
+
+  {# Лог действий и управление #}
+  <aside id="log-panel">
+    <div class="log-controls">
+      <button id="toggle-log">{{ t("buttons.settings", lang) }}</button>
+      <button id="clear-log">🗑️</button>
+      <label><input type="checkbox" id="file-log"> Log to file</label>
+    </div>
+    <div id="log-entries"></div>
+  </aside>
+{% endblock %}

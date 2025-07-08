@@ -1,0 +1,58 @@
+{
+  "title": {
+    "ru": "🛰️ Статус модемов",
+    "en": "🛰️ Modem Status",
+    "zh": "🛰️ 调制解调器状态"
+  },
+  "table_headers": {
+    "port":        { "ru":"Порт","en":"Port","zh":"端口" },
+    "model":       { "ru":"Модель","en":"Model","zh":"型号" },
+    "vendor":      { "ru":"Производитель","en":"Vendor","zh":"制造商" },
+    "imsi":        { "ru":"IMSI","en":"IMSI","zh":"IMSI" },
+    "operator":    { "ru":"Оператор","en":"Operator","zh":"运营商" },
+    "sim_country": { "ru":"Страна SIM","en":"SIM Country","zh":"SIM 国家" },
+    "network":     { "ru":"Сеть","en":"Network","zh":"网络" },
+    "signal":      { "ru":"Сигнал","en":"Signal","zh":"信号" },
+    "status":      { "ru":"Статус","en":"Status","zh":"状态" },
+    "sms":         { "ru":"SMS","en":"SMS","zh":"短信" },
+    "voice":       { "ru":"Voice","en":"Voice","zh":"通话" },
+    "imei":        { "ru":"IMEI","en":"IMEI","zh":"IMEI" },
+    "iccid":       { "ru":"ICCID","en":"ICCID","zh":"ICCID" },
+    "cpin":        { "ru":"CPIN","en":"CPIN","zh":"CPIN" },
+    "ussd":        { "ru":"USSD","en":"USSD","zh":"USSD" }
+  },
+  "buttons": {
+    "connect":    { "ru":"Подключить","en":"Connect","zh":"连接" },
+    "disconnect": { "ru":"Отключить","en":"Disconnect","zh":"断开" },
+    "ussd":       { "ru":"USSD Код","en":"USSD Code","zh":"USSD代码" },
+    "port_find":  { "ru":"Найти порт","en":"Port Find","zh":"查找端口" },
+    "port_sort":  { "ru":"Сортировка портов","en":"Port Sort","zh":"排序端口" },
+    "settings":   { "ru":"Настройки","en":"Settings","zh":"设置" },
+    "add_rule":   { "ru":"Добавить правило","en":"Add Rule","zh":"添加规则" },
+    "edit":       { "ru":"Изменить","en":"Edit","zh":"编辑" },
+    "delete":     { "ru":"Удалить","en":"Delete","zh":"删除" },
+    "actions":    { "ru":"Действия","en":"Actions","zh":"操作" }
+  },
+  "tabs": {
+    "ports":     { "ru":"Порты","en":"Ports","zh":"端口" },
+    "phones":    { "ru":"Телефоны","en":"Phones","zh":"手机" },
+    "received":  { "ru":"Получено","en":"Received","zh":"接收" },
+    "sent":      { "ru":"Отправлено","en":"Sent","zh":"发送" },
+    "rules":     { "ru":"Правила","en":"Rules","zh":"规则" },
+    "no_rules":  { "ru":"Без правил","en":"No rules","zh":"无规则" },
+    "forward":   { "ru":"Переадресация","en":"Forward","zh":"转发" }
+  },
+  "change_language": {
+    "ru":"Сменить язык","en":"Change Language","zh":"切换语言"
+  },
+  "modal_placeholder": {
+    "ru":"Это окно настроек ещё не реализовано.","en":"This settings window is not yet implemented.","zh":"该设置窗口尚未实现。"
+  },
+  "no_modems_found": {
+    "ru":"Модемы не найдены.","en":"No modems found.","zh":"未找到调制解调器。"
+  },
+  "rules_fields": {
+    "pattern": { "ru":"Шаблон","en":"Pattern","zh":"模式" },
+    "extract": { "ru":"Индекс","en":"Extract Index","zh":"提取索引" }
+  }
+}

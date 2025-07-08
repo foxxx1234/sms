@@ -1,0 +1,63 @@
+{# templates/layout.html #}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Основные стили -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- Передаём в JS текущий язык и словари переводов -->
+  <script>
+    window.lang    = "{{ lang }}";
+    window.buttons = {{ buttons | tojson }};
+    window.tabs    = {{ tabs    | tojson }};
+    window.labels  = {{ labels  | tojson }};
+  </script>
+
+  <!-- Скрипты -->
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/contextMenu.js') }}" defer></script>
+</head>
+<body>
+  <!-- Header: логотип и переключение языка -->
+  <header class="app-header">
+    <div class="logo">
+      <h1>{{ title }}</h1>
+    </div>
+    <div class="lang-switch">
+      <button class="lang-btn" data-lang="ru">RU</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中文</button>
+    </div>
+  </header>
+
+  <!-- Главное меню (кнопки действий) -->
+  <nav class="main-menu">
+    <button class="menu-btn" data-action="connect">{{ buttons.connect[lang] }}</button>
+    <button class="menu-btn" data-action="disconnect">{{ buttons.disconnect[lang] }}</button>
+    <button class="menu-btn" data-action="ussd">{{ buttons.ussd[lang] }}</button>
+    <button class="menu-btn" data-action="port_find">{{ buttons.port_find[lang] }}</button>
+    <button class="menu-btn" data-action="port_sort">{{ buttons.port_sort[lang] }}</button>
+    <button class="menu-btn" data-action="settings">{{ buttons.settings[lang] }}</button>
+  </nav>
+
+  <!-- Вкладки (таб-бары) -->
+  <nav class="tabs-menu">
+    {% for key, lbl in tabs.items() %}
+      <button class="tab-btn" data-tab="{{ key }}">{{ lbl[lang] }}</button>
+    {% endfor %}
+  </nav>
+
+  <!-- Основное содержимое страницы -->
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Подложка и контейнер для модальных окон -->
+  <div id="modal-backdrop" class="hidden"></div>
+  <div id="modal-container"></div>
+</body>
+</html>

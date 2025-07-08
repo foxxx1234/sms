@@ -1,0 +1,219 @@
+/* static/css/style.css */
+
+/* Общие стили */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f9f9f9;
+  color: #333;
+}
+
+/* Header */
+header.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #2c3e50;
+  color: #fff;
+}
+header.app-header .logo h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+header.app-header .lang-switch {
+  display: flex;
+  gap: 0.5rem;
+}
+header.app-header .lang-btn {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.9rem;
+}
+header.app-header .lang-btn:hover {
+  background: #34495e;
+}
+
+/* Главное меню */
+nav.main-menu {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #ecf0f1;
+}
+nav.main-menu .menu-btn {
+  flex: none;
+  background: #3498db;
+  border: none;
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.9rem;
+}
+nav.main-menu .menu-btn:hover {
+  background: #2980b9;
+}
+
+/* Подменю (вкладки) */
+nav.tabs-menu {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #bdc3c7;
+}
+nav.tabs-menu .tab-btn {
+  flex: none;
+  background: #ecf0f1;
+  border: none;
+  color: #2c3e50;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.9rem;
+}
+nav.tabs-menu .tab-btn.active {
+  background: #95a5a6;
+  color: #fff;
+}
+
+/* Основное содержимое */
+main#main-content {
+  padding: 1rem;
+}
+
+/* Таблица модемов */
+section.modem-section {
+  width: 100%;
+  overflow-x: auto;
+}
+#modem-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+#modem-table thead {
+  background: #34495e;
+  color: #ecf0f1;
+}
+#modem-table th,
+#modem-table td {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  text-align: center;
+  white-space: nowrap;
+}
+#modem-table th.sortable {
+  cursor: pointer;
+}
+#modem-table th.sortable:hover {
+  background: #3b556b;
+}
+#modem-table tbody tr:hover {
+  background: #f0f8ff;
+}
+
+/* Чекбоксы и кнопки в строках */
+#modem-table .sel {
+  transform: scale(1.2);
+}
+#modem-table .row-actions button {
+  margin: 0 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: #27ae60;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+#modem-table .row-actions .btn-disconnect {
+  background: #c0392b;
+}
+#modem-table .row-actions button:hover {
+  opacity: 0.9;
+}
+
+/* Лог действий */
+#log-panel {
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  background: #ecf0f1;
+  border-top: 2px solid #ccc;
+}
+#log-panel .log-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+#log-panel .log-controls button {
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: #2980b9;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.85rem;
+}
+#log-panel .log-controls button:hover {
+  background: #1f6391;
+}
+#log-panel .log-controls label {
+  font-size: 0.85rem;
+}
+#log-entries {
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+/* Модальные окна */
+#modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+#modal-backdrop.hidden {
+  display: none;
+}
+#modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1001;
+  min-width: 320px;
+  max-width: 90%;
+}
+
+/* Скроллбар (опционально) */
+#log-entries::-webkit-scrollbar,
+section.modem-section::-webkit-scrollbar {
+  width: 8px;
+}
+#log-entries::-webkit-scrollbar-thumb,
+section.modem-section::-webkit-scrollbar-thumb {
+  background: #95a5a6;
+  border-radius: 4px;
+}

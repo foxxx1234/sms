@@ -1,0 +1,39 @@
+{# templates/rules.html #}
+{% extends "layout.html" %}
+
+{% block content %}
+  <section class="rules-section">
+    <header>
+      <h2>{{ tabs.rules[lang] }}</h2>
+      <button id="add‐rule" class="menu-btn">{{ t("buttons.add_rule", lang) }}</button>
+    </header>
+
+    <table id="rules-table">
+      <thead>
+        <tr>
+          <th>{{ t("table_headers.operator", lang) }}</th>
+          <th>{{ t("rules_fields.pattern", lang) }}</th>
+          <th>{{ t("rules_fields.extract", lang) }}</th>
+          <th>{{ t("buttons.actions", lang) }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rule in rules_list %}
+        <tr data-id="{{ rule.id }}">
+          <td>{{ rule.operator }}</td>
+          <td>{{ rule.pattern }}</td>
+          <td>{{ rule.extract_index }}</td>
+          <td>
+            <button class="edit-rule">{{ t("buttons.edit", lang) }}</button>
+            <button class="delete-rule">{{ t("buttons.delete", lang) }}</button>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="no-rules">{{ tabs.no_rules[lang] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}
