@@ -16,7 +16,7 @@
           {# Заголовки столбцов из translations.json #}
           {% for key in hdr_keys %}
             {% set label = labels[key] %}
-            <th class="sortable" data-key="{{ key }}">{{ label }}</th>
+            <th class="sortable" data-key="{{ key }}" draggable="true">{{ label }}</th>
           {% endfor %}
         </tr>
       </thead>

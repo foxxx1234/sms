@@ -7,7 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const buttonsTrans = window.buttons;    // из translations.json → buttons
   const tabsTrans    = window.tabs;       // из translations.json → tabs
   const labelsTrans  = window.labels;     // из translations.json → table_headers
-  const columnKeys   = (window.colKeys && window.colKeys.length) ? window.colKeys : Object.keys(labelsTrans);
+  let columnKeys = [];
+  try {
+    const savedOrder = localStorage.getItem('columnOrder');
+    if (savedOrder) columnKeys = JSON.parse(savedOrder);
+  } catch(e) {}
+  if (!Array.isArray(columnKeys) || !columnKeys.length) {
+    columnKeys = (window.colKeys && window.colKeys.length) ? window.colKeys : Object.keys(labelsTrans);
+  }
   let currentLang    = window.lang || 'en';
 
   //
@@ -440,10 +447,58 @@ document.addEventListener('DOMContentLoaded', () => {
   // Пометить заголовки с data-key как sortable
   thead.querySelectorAll('th').forEach(th => {
     if (th.dataset.key) th.classList.add('sortable');
+    if (th.dataset.key) th.setAttribute('draggable', 'true');
   });
+  reorderHeaders();
   initColumnResizers();
 
+  let dragKey = null;
+
+  thead.addEventListener('dragstart', e => {
+    const th = e.target.closest('th.sortable');
+    if (!th) return;
+    dragKey = th.dataset.key;
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  thead.addEventListener('dragover', e => {
+    const th = e.target.closest('th.sortable');
+    if (!th || dragKey === null) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  });
+
+  thead.addEventListener('drop', e => {
+    const th = e.target.closest('th.sortable');
+    if (!th || dragKey === null) return;
+    e.preventDefault();
+    const targetKey = th.dataset.key;
+    if (targetKey === dragKey) return;
+    const from = columnKeys.indexOf(dragKey);
+    const to = columnKeys.indexOf(targetKey);
+    columnKeys.splice(to, 0, columnKeys.splice(from, 1)[0]);
+    localStorage.setItem('columnOrder', JSON.stringify(columnKeys));
+    reorderHeaders();
+    initColumnResizers();
+    renderTable();
+  });
+
+  function reorderHeaders() {
+    const tr = thead.querySelector('tr');
+    const colgroup = table.querySelector('colgroup');
+    const thMap = {};
+    thead.querySelectorAll('th.sortable').forEach(th => thMap[th.dataset.key] = th);
+    const colMap = {};
+    colgroup.querySelectorAll('col[data-key]').forEach(col => colMap[col.dataset.key] = col);
+    columnKeys.forEach(key => {
+      if (colMap[key]) colgroup.appendChild(colMap[key]);
+      if (thMap[key]) tr.appendChild(thMap[key]);
+    });
+  }
+
   function initColumnResizers() {
+    // remove old resizers
+    thead.querySelectorAll('.col-resizer').forEach(r => r.remove());
     const cols = table.querySelectorAll('colgroup col');
     thead.querySelectorAll('th').forEach((th, idx) => {
       if (idx === 0) return;
