@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const buttonsTrans = window.buttons;    // из translations.json → buttons
   const tabsTrans    = window.tabs;       // из translations.json → tabs
   const labelsTrans  = window.labels;     // из translations.json → table_headers
+  const columnKeys   = (window.colKeys && window.colKeys.length) ? window.colKeys : Object.keys(labelsTrans);
   let currentLang    = window.lang || 'en';
 
   //
@@ -58,10 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (port) tr.dataset.port = port;
       let html = '';
       html += `<td><input type="checkbox" class="sel"${port ? '' : ' disabled'}></td>`;
-      for (let key in labelsTrans) {
+      columnKeys.forEach(key => {
         const val = (key === 'port' && port) ? port : '—';
         html += `<td class="${key}">${val}</td>`;
-      }
+      });
       tr.innerHTML = html;
       tbody.appendChild(tr);
     });
@@ -93,10 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const tr = document.createElement('tr');
         tr.dataset.port = port;
         let html = '<td><input type="checkbox" class="sel"></td>';
-        for (let key in labelsTrans) {
+        columnKeys.forEach(key => {
           const val = key === 'port' ? port : '—';
           html += `<td class="${key}">${val}</td>`;
-        }
+        });
         tr.innerHTML = html;
         tbody.appendChild(tr);
         row = tr;
@@ -111,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         row = document.createElement('tr');
         row.dataset.port = port;
         let html = '<td><input type="checkbox" class="sel"></td>';
-        Object.keys(labelsTrans).forEach(key => {
+        columnKeys.forEach(key => {
           const val = key === 'port' ? port : (info[key] !== undefined ? info[key] : '—');
           html += `<td class="${key}">${val}</td>`;
         });
@@ -121,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
           allPorts.push(port);
         }
       } else {
-        Object.keys(labelsTrans).forEach(key => {
+        columnKeys.forEach(key => {
           const cell = row.querySelector(`td.${key}`);
           if (cell && info[key] !== undefined) {
             cell.textContent = info[key];

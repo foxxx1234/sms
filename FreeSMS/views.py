@@ -37,6 +37,7 @@ def index():
         ports=ports,
         labels=labels_cur,
         labels_all=labels_all,
+        hdr_keys=hdr_keys,
         buttons=buttons,
         tabs=tabs,
         lang=lang,
