@@ -170,7 +170,7 @@ section.modem-section {
 .table-controls {
   display: flex;
   justify-content: flex-end;
-  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 .table-controls .menu-btn {
   background: #3498db;
