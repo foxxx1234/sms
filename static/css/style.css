@@ -140,7 +140,7 @@ section.modem-section {
   user-select: none;
 }
 #modem-table th.sortable {
-  cursor: pointer;
+  cursor: move;
 }
 #modem-table th.sortable:hover {
   background: #3b556b;
