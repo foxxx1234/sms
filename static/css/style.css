@@ -61,6 +61,9 @@ nav.main-menu .menu-btn {
 nav.main-menu .menu-btn:hover {
   background: #2980b9;
 }
+nav.main-menu .menu-btn:active {
+  background: #1f6391;
+}
 
 /* Подменю (вкладки) */
 nav.tabs-menu {
