@@ -16,22 +16,24 @@ from .i18n import t, get_language
 BASE = os.path.dirname(__file__)
 OPS_PATH = os.path.abspath(os.path.join(BASE, "..", "operators.json"))
 
-# Загружаем список операторов: MCC+MNC → "ccc-operator"
+# Загружаем список операторов: MCC+MNC → "ccc-operator" и MCC → страна
 try:
     with open(OPS_PATH, encoding="utf-8") as f:
         _ops_list = json.load(f)
 except FileNotFoundError:
     _ops_list = []
 
-# Собираем маппинг "MCCMNC" → "ccc-operator"
+# Собираем маппинги
 OPS_MAP = {}
+COUNTRY_MAP = {}
 for entry in _ops_list:
-    mcc = entry.get("mcc", "")
-    mnc = entry.get("mnc", "")
-    country_code = entry.get("country", "").lower()   # ожидаем трибуквенный код страны
+    mcc = str(entry.get("mcc", ""))
+    mnc = str(entry.get("mnc", ""))
+    country_code = entry.get("country", "").lower()  # ожидаем трибуквенный код страны
     operator_code = entry.get("operator", "").lower()
     if mcc and mnc and country_code and operator_code:
         OPS_MAP[mcc + mnc] = f"{country_code}-{operator_code}"
+        COUNTRY_MAP.setdefault(mcc, country_code)
 
 
 def list_modem_ports():
@@ -112,6 +114,8 @@ def get_country_from_imsi(imsi):
     if len(imsi) < 3 or not imsi[:3].isdigit():
         return ""
     mcc = imsi[:3]
+    if mcc in COUNTRY_MAP:
+        return COUNTRY_MAP[mcc]
     country = pycountry.countries.get(numeric=mcc)
     if country:
         return country.alpha_3.lower()
