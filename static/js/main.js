@@ -74,6 +74,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   //
+  // Обновить строки таблицы данными модемов
+  //
+  function updateRows(results) {
+    Object.keys(results).forEach(port => {
+      const row = tbody.querySelector(`tr[data-port="${port}"]`);
+      if (!row) return;
+      const info = results[port];
+      Object.keys(labelsTrans).forEach(key => {
+        const cell = row.querySelector(`td.${key}`);
+        if (cell && info[key] !== undefined) {
+          cell.textContent = info[key];
+        }
+      });
+    });
+  }
+
+  // делаем функцию глобальной, чтобы её вызывал contextMenu.js
+  window.updateRows = updateRows;
+
+  //
   // Загрузить порты из API
   //
   function loadPorts() {
@@ -104,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(res => {
       // API на connect возвращает { success:true, results: {...} }
       if (action === 'connect' && res.results) {
-        // Можно отрисовать детали из res.results[port]
+        updateRows(res.results);
         log(`${action}: ${Object.keys(res.results).join(', ')}`);
       } else if (res.ports) {
         log(`${action}: ${res.ports.join(', ')}`);

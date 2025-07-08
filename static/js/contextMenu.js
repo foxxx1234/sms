@@ -82,7 +82,11 @@ function hideContextMenu() {
 
 // Обновить строку после действия (stub)
 function updateRow(data) {
-  // здесь можно обновить конкретную строку с портом data.ports[0]
+  if (data && data.results) {
+    if (typeof window.updateRows === 'function') {
+      window.updateRows(data.results);
+    }
+  }
   console.log("Context action result:", data);
 }
 
