@@ -4,6 +4,7 @@ import os
 import json
 import re
 import time
+import glob
 
 import serial
 import serial.tools.list_ports
@@ -34,10 +35,23 @@ for entry in _ops_list:
 
 
 def list_modem_ports():
-    """
-    Возвращает список доступных COM-портов для модемов.
-    """
-    return [p.device for p in serial.tools.list_ports.comports()]
+    """Возвращает список доступных COM-портов для модемов."""
+    ports = [p.device for p in serial.tools.list_ports.comports()]
+    if ports:
+        return ports
+
+    # Fallback scanning for environments where pyserial returns nothing
+    extra = []
+    if os.name == "nt":
+        # Windows: probe common COM range
+        for i in range(1, 257):
+            extra.append(f"COM{i}")
+    else:
+        # POSIX systems: typical modem device patterns
+        patterns = ["/dev/ttyUSB*", "/dev/ttyACM*", "/dev/cu.*", "/dev/tty.*"]
+        for pat in patterns:
+            extra.extend(glob.glob(pat))
+    return extra
 
 
 def send_at_command(port, command, timeout=1.0):
@@ -170,3 +184,4 @@ def get_modem_info(port, lang=None):
     info["ussd"] = ""
 
     return info
+
