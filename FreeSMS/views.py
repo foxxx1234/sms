@@ -181,13 +181,10 @@ def api_modem_info():
 def api_connect():
     """Connect to selected ports and return modem info.
 
-
-    Accepts JSON ``{"ports": [..]}`` and returns modem info either as
-    a traditional aggregated JSON object or streams per-port results when the
+    Accepts JSON ``{"ports": [..]}`` and returns modem info either as a
+    traditional aggregated JSON object or streams per-port results when the
     client requests ``text/event-stream``.
-    """
 
-=======
     POST  - returns a single JSON object for all ports (legacy behaviour)
     GET   - streams JSON objects per port via Server-Sent Events
     """
