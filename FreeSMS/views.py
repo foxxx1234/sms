@@ -179,16 +179,39 @@ def api_modem_info():
 
 @app.route("/api/connect", methods=["POST"])
 def api_connect():
+    """Connect to selected ports and return modem info.
+
+    Accepts JSON ``{"ports": [..]}`` and returns modem info either as
+    a traditional aggregated JSON object or streams per-port results when the
+    client requests ``text/event-stream``.
+    """
+
     data = request.get_json(force=True) or {}
-    sel = data.get("ports") or list_modem_ports()
-    results = {}
+    ports = data.get("ports") or list_modem_ports()
     lang = request.cookies.get("lang", get_language())
-    for p in sel:
+
+    # Check if the client expects streaming responses
+    if request.headers.get("Accept") == "text/event-stream":
+        def generate():
+            for p in ports:
+                try:
+                    info = get_modem_info(p, lang)
+                except Exception as e:
+                    info = {"port": p, "status": str(e)}
+                if "port" not in info:
+                    info["port"] = p
+                yield f"data: {json.dumps(info)}\n\n"
+
+        return current_app.response_class(generate(), mimetype="text/event-stream")
+
+    # Legacy behaviour – aggregate results in a single JSON
+    results = {}
+    for p in ports:
         try:
             results[p] = get_modem_info(p, lang)
         except Exception as e:
             results[p] = {"error": str(e)}
-    return jsonify(success=True, ports=sel, results=results)
+    return jsonify(success=True, ports=ports, results=results)
 
 @app.route("/api/disconnect", methods=["POST"])
 def api_disconnect():
