@@ -1,4 +1,7 @@
 [
-  { "mcc":"250","mnc":"01","code":"rus-mts" },
-  { "mcc":"250","mnc":"02","code":"rus-megafon" }
+  { "mcc": "655", "mnc": "10", "country": "zaf", "operator": "mtn" },
+  { "mcc": "655", "mnc": "01", "country": "zaf", "operator": "vodacom" },
+  { "mcc": "250", "mnc": "01", "country": "rus", "operator": "mts" },
+  { "mcc": "250", "mnc": "02", "country": "rus", "operator": "megafon" }
 ]
+
