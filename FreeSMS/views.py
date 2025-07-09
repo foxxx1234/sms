@@ -407,7 +407,7 @@ def api_set_port_state():
 @app.route("/api/monitor", methods=["GET"])
 def api_monitor():
     """Stream modem state changes via Server-Sent Events."""
-    ports = request.args.getlist("ports") or list_modem_ports()
+    requested_ports = request.args.getlist("ports")
     lang = request.cookies.get("lang", get_language())
 
     def generate():
@@ -417,15 +417,24 @@ def api_monitor():
         asyncio.set_event_loop(loop)
         try:
             while True:
-                tasks = [get_modem_info_async(p, lang) for p in ports]
+                current_ports = requested_ports or list_modem_ports()
+                tasks = [get_modem_info_async(p, lang) for p in current_ports]
                 results = loop.run_until_complete(
                     asyncio.gather(*tasks, return_exceptions=True)
                 )
-                for p, res in zip(ports, results):
+                new_by_port = {}
+                new_by_sim = {}
+                for p, res in zip(current_ports, results):
                     if isinstance(res, Exception):
                         event_logger.log_event(
                             "monitor_error", port=p, details=str(res)
                         )
+                        info = prev_by_port.get(p)
+                        if info:
+                            new_by_port[p] = info
+                            iccid_saved = info.get("iccid")
+                            if iccid_saved:
+                                new_by_sim[iccid_saved] = info
                         continue
                     info = res
                     port = info.get("port")
@@ -460,10 +469,22 @@ def api_monitor():
 
                     if diff:
                         diff["port"] = port
-                        prev_by_port[port] = info
-                        if iccid:
-                            prev_by_sim[iccid] = info
                         yield f"data: {json.dumps(diff)}\n\n"
+                    new_by_port[port] = info
+                    if iccid:
+                        new_by_sim[iccid] = info
+
+                removed_ports = set(prev_by_port) - set(new_by_port)
+                for rp in removed_ports:
+                    yield f"data: {json.dumps({'port': rp, 'removed': True})}\n\n"
+                removed_sims = set(prev_by_sim) - set(new_by_sim)
+                for sim in removed_sims:
+                    rp = prev_by_sim[sim].get("port")
+                    if rp and rp not in removed_ports:
+                        yield f"data: {json.dumps({'port': rp, 'removed': True})}\n\n"
+
+                prev_by_port = new_by_port
+                prev_by_sim = new_by_sim
                 time.sleep(1.0)
         except GeneratorExit:
             return
