@@ -232,6 +232,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const current = portInfo[port] || {};
       portInfo[port] = Object.assign({}, current, results[port], { port });
 
+      if (fileLogCb.checked) {
+        fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: JSON.stringify(portInfo[port]), port })
+        }).catch(() => {});
+      }
+
       if (!row) {
         const tr = document.createElement('tr');
         tr.dataset.port = port;
