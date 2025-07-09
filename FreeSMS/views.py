@@ -8,6 +8,7 @@ import asyncio
 from flask import (
     render_template, request, jsonify, make_response, current_app
 )
+from deepdiff import DeepDiff
 from . import app
 from . import event_logger
 from .modem_utils import (
@@ -420,13 +421,24 @@ def api_monitor():
                 )
                 for info in infos:
                     p = info.get("port")
-                    diff = {}
                     old = prev.get(p, {})
-                    for k, v in info.items():
-                        if k == "port":
-                            continue
-                        if old.get(k) != v:
-                            diff[k] = v
+                    dd = DeepDiff(old, info, ignore_order=True).to_dict()
+                    diff = {}
+                    # Changed values
+                    for path, change in dd.get("values_changed", {}).items():
+                        key = path.strip("root[").strip("]'").split("['")[-1]
+                        if key != "port":
+                            diff[key] = change.get("new_value")
+                    # Added keys
+                    for path in dd.get("dictionary_item_added", []):
+                        key = path.strip("root[").strip("]'").split("['")[-1]
+                        if key != "port":
+                            diff[key] = info.get(key)
+                    # Removed keys
+                    for path in dd.get("dictionary_item_removed", []):
+                        key = path.strip("root[").strip("]'").split("['")[-1]
+                        if key != "port":
+                            diff[key] = None
                     if diff:
                         diff["port"] = p
                         prev[p] = info
