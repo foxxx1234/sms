@@ -407,25 +407,32 @@ def api_monitor():
     def generate():
         prev = {}
         try:
-            while True:
-                for p in ports:
-                    try:
-                        info = get_modem_info(p, lang)
-                    except Exception as e:
-                        info = {"port": p, "error": str(e)}
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=min(len(ports), 10)
+            ) as executor:
+                while True:
+                    future_map = {
+                        executor.submit(get_modem_info, p, lang): p for p in ports
+                    }
+                    for future in concurrent.futures.as_completed(future_map):
+                        p = future_map[future]
+                        try:
+                            info = future.result()
+                        except Exception as e:
+                            info = {"port": p, "error": str(e)}
 
-                    diff = {}
-                    old = prev.get(p, {})
-                    for k, v in info.items():
-                        if k == "port":
-                            continue
-                        if old.get(k) != v:
-                            diff[k] = v
-                    if diff:
-                        diff["port"] = p
-                        prev[p] = info
-                        yield f"data: {json.dumps(diff)}\n\n"
-                time.sleep(1)
+                        diff = {}
+                        old = prev.get(p, {})
+                        for k, v in info.items():
+                            if k == "port":
+                                continue
+                            if old.get(k) != v:
+                                diff[k] = v
+                        if diff:
+                            diff["port"] = p
+                            prev[p] = info
+                            yield f"data: {json.dumps(diff)}\n\n"
+                    time.sleep(0.5)
         except GeneratorExit:
             return
 
