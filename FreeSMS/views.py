@@ -18,6 +18,25 @@ from .modem_utils import (
 )
 from .i18n import t, get_language, set_language
 
+# Maximum number of worker threads for concurrent modem operations
+MAX_WORKERS = 10
+
+
+def render_page(template: str, **context):
+    """Render template with common translation context."""
+    lang = request.cookies.get("lang", get_language())
+    set_language(lang)
+    base_ctx = {
+        "buttons": current_app.config["TRANSLATIONS"]["buttons"],
+        "tabs": current_app.config["TRANSLATIONS"]["tabs"],
+        "labels_all": current_app.config["TRANSLATIONS"]["table_headers"],
+        "logs": current_app.config["TRANSLATIONS"].get("log_messages", {}),
+        "lang": lang,
+        "t": t,
+    }
+    base_ctx.update(context)
+    return render_template(template, **base_ctx)
+
 # Заглушки для правил и USSD-конфига
 RULES = []
 USSD_CONFIG = {}
@@ -25,160 +44,64 @@ USSD_CONFIG = {}
 # ---------- Основная страница ----------
 @app.route("/", methods=["GET"])
 def index():
-    # язык из cookie или из config.json
+    """Display the modem overview page."""
     lang = request.cookies.get("lang", get_language())
     set_language(lang)
 
-    # сканируем все порты
     ports = list_modem_ports()
-
-    # Заголовки таблицы: все переводы и текущий язык отдельно
     translations = current_app.config["TRANSLATIONS"]["table_headers"]
     hdr_keys = list(translations.keys())
     labels_all = {k: translations[k] for k in hdr_keys}
     labels_cur = {k: t(f"table_headers.{k}", lang) for k in hdr_keys}
 
-    # кнопки и вкладки из конфигурации
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
+    return render_page(
         "index.html",
         ports=ports,
         labels=labels_cur,
         labels_all=labels_all,
         hdr_keys=hdr_keys,
-        buttons=buttons,
-        tabs=tabs,
-        logs=logs,
-        lang=lang,
-        t=t
     )
 
 # ---------- Страницы телефонов, сообщений, правил и т.д. ----------
 @app.route("/phones", methods=["GET"])
 def phones():
-    lang = request.cookies.get("lang", get_language())
-    set_language(lang)
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
-        "phones.html",
-        buttons=buttons,
-        tabs=tabs,
-        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
-        logs=logs,
-        lang=lang,
-        t=t
-    )
+    """Show saved phone book entries."""
+    return render_page("phones.html")
 
 @app.route("/received", methods=["GET"])
 def received():
-    lang = request.cookies.get("lang", get_language())
-    set_language(lang)
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
-        "received.html",
-        buttons=buttons,
-        tabs=tabs,
-        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
-        logs=logs,
-        lang=lang,
-        t=t
-    )
+    """Display received SMS messages."""
+    return render_page("received.html")
 
 @app.route("/sent", methods=["GET"])
 def sent():
-    lang = request.cookies.get("lang", get_language())
-    set_language(lang)
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
-        "sent.html",
-        buttons=buttons,
-        tabs=tabs,
-        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
-        logs=logs,
-        lang=lang,
-        t=t
-    )
+    """Show sent SMS messages."""
+    return render_page("sent.html")
 
 @app.route("/rules", methods=["GET"])
 def rules():
-    lang = request.cookies.get("lang", get_language())
-    set_language(lang)
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
-        "rules.html",
-        rules_list=RULES,
-        buttons=buttons,
-        tabs=tabs,
-        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
-        logs=logs,
-        lang=lang,
-        t=t
-    )
+    """Display rules configuration."""
+    return render_page("rules.html", rules_list=RULES)
 
 @app.route("/no_rules", methods=["GET"])
 def no_rules():
-    lang = request.cookies.get("lang", get_language())
-    set_language(lang)
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
-        "no_rules.html",
-        buttons=buttons,
-        tabs=tabs,
-        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
-        logs=logs,
-        lang=lang,
-        t=t
-    )
+    """Fallback page when no rules are defined."""
+    return render_page("no_rules.html")
 
 @app.route("/forward", methods=["GET"])
 def forward():
-    lang = request.cookies.get("lang", get_language())
-    set_language(lang)
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
-        "forward.html",
-        buttons=buttons,
-        tabs=tabs,
-        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
-        logs=logs,
-        lang=lang,
-        t=t
-    )
+    """Display SIM forwarding configuration."""
+    return render_page("forward.html")
 
 @app.route("/settings", methods=["GET"])
 def settings():
-    lang = request.cookies.get("lang", get_language())
-    set_language(lang)
-    buttons = current_app.config["TRANSLATIONS"]["buttons"]
-    tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
-    return render_template(
-        "settings.html",
-        buttons=buttons,
-        tabs=tabs,
-        labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
-        logs=logs,
-        lang=lang,
-        t=t
-    )
+    """Application settings page."""
+    return render_page("settings.html")
 
 # ---------- Смена языка ----------
 @app.route("/set_language", methods=["POST"])
 def set_lang():
+    """Persist selected language in the config and cookie."""
     data = request.get_json(force=True) or {}
     lang = data.get("lang")
     if lang:
@@ -227,22 +150,28 @@ def api_connect():
         lang = request.cookies.get("lang", get_language())
 
         def generate():
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=min(len(ports), 10)
-            ) as executor:
-                future_map = {
-                    executor.submit(get_modem_info, p, lang): p for p in ports
-                }
-                for future in concurrent.futures.as_completed(future_map):
-                    p = future_map[future]
-                    try:
-                        info = future.result()
-                    except Exception as e:
-                        info = {"port": p, "status": str(e)}
-                    if "port" not in info:
-                        info["port"] = p
-                    event_logger.log_event("port_connected", port=p)
-                    yield f"data: {json.dumps(info)}\n\n"
+            try:
+                with concurrent.futures.ThreadPoolExecutor(
+                    max_workers=min(len(ports), MAX_WORKERS)
+                ) as executor:
+                    future_map = {
+                        executor.submit(get_modem_info, p, lang): p for p in ports
+                    }
+                    for future in concurrent.futures.as_completed(future_map):
+                        p = future_map[future]
+                        try:
+                            info = future.result()
+                        except Exception as e:
+                            info = {"port": p, "status": str(e)}
+                        if "port" not in info:
+                            info["port"] = p
+                        event_logger.log_event("port_connected", port=p)
+                        yield f"data: {json.dumps(info)}\n\n"
+            except GeneratorExit:
+                return
+            except Exception as e:
+                event_logger.log_event("sse_error", details=str(e))
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
@@ -254,29 +183,35 @@ def api_connect():
     # Check if the client expects streaming responses
     if request.headers.get("Accept") == "text/event-stream":
         def generate():
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=min(len(ports), 10)
-            ) as executor:
-                future_map = {
-                    executor.submit(get_modem_info, p, lang): p for p in ports
-                }
-                for future in concurrent.futures.as_completed(future_map):
-                    p = future_map[future]
-                    try:
-                        info = future.result()
-                    except Exception as e:
-                        info = {"port": p, "status": str(e)}
-                    if "port" not in info:
-                        info["port"] = p
-                    event_logger.log_event("port_connected", port=p)
-                    yield f"data: {json.dumps(info)}\n\n"
+            try:
+                with concurrent.futures.ThreadPoolExecutor(
+                    max_workers=min(len(ports), MAX_WORKERS)
+                ) as executor:
+                    future_map = {
+                        executor.submit(get_modem_info, p, lang): p for p in ports
+                    }
+                    for future in concurrent.futures.as_completed(future_map):
+                        p = future_map[future]
+                        try:
+                            info = future.result()
+                        except Exception as e:
+                            info = {"port": p, "status": str(e)}
+                        if "port" not in info:
+                            info["port"] = p
+                        event_logger.log_event("port_connected", port=p)
+                        yield f"data: {json.dumps(info)}\n\n"
+            except GeneratorExit:
+                return
+            except Exception as e:
+                event_logger.log_event("sse_error", details=str(e))
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
     # Legacy behaviour – aggregate results in a single JSON
     results = {}
     with concurrent.futures.ThreadPoolExecutor(
-        max_workers=min(len(ports), 10)
+        max_workers=min(len(ports), MAX_WORKERS)
     ) as executor:
         future_map = {
             executor.submit(get_modem_info, p, lang): p for p in ports
@@ -488,6 +423,9 @@ def api_monitor():
                 time.sleep(1.0)
         except GeneratorExit:
             return
+        except Exception as e:
+            event_logger.log_event("monitor_stream_error", details=str(e))
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
         finally:
             loop.close()
 
