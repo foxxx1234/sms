@@ -217,9 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
   //
   function updateRows(results) {
     let added = false;
+    let changed = false;
     Object.keys(results).forEach(port => {
       let row = tbody.querySelector(`tr[data-port="${port}"]`);
-      portInfo[port] = Object.assign({}, portInfo[port] || {}, results[port], { port });
+      const current = portInfo[port] || {};
+      portInfo[port] = Object.assign({}, current, results[port], { port });
 
       if (!row) {
         const tr = document.createElement('tr');
@@ -249,18 +251,21 @@ document.addEventListener('DOMContentLoaded', () => {
           const cell = row.querySelector(`td.${key}`);
           if (cell && results[port][key] !== undefined) {
             const fullVal = results[port][key];
-            cell.dataset.full = fullVal;
-            if (fullVal.toString().length > 15) {
-              cell.dataset.short = fullVal.toString().slice(0,15) + '…';
-              cell.dataset.truncated = '1';
-              if (!cell.dataset.expanded) {
-                cell.textContent = cell.dataset.short;
+            if (cell.dataset.full !== String(fullVal)) {
+              changed = true;
+              cell.dataset.full = fullVal;
+              if (fullVal.toString().length > 15) {
+                cell.dataset.short = fullVal.toString().slice(0,15) + '…';
+                cell.dataset.truncated = '1';
+                if (!cell.dataset.expanded) {
+                  cell.textContent = cell.dataset.short;
+                } else {
+                  cell.textContent = fullVal;
+                }
               } else {
+                cell.dataset.truncated = '';
                 cell.textContent = fullVal;
               }
-            } else {
-              cell.dataset.truncated = '';
-              cell.textContent = fullVal;
             }
           }
         });
@@ -280,7 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-    localStorage.setItem('portInfo', JSON.stringify(portInfo));
+    if (added || changed) {
+      localStorage.setItem('portInfo', JSON.stringify(portInfo));
+    }
   }
 
   // делаем функцию глобальной, чтобы её вызывал contextMenu.js
