@@ -34,7 +34,7 @@ def index():
     # кнопки и вкладки из конфигурации
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
-
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "index.html",
         ports=ports,
@@ -43,6 +43,7 @@ def index():
         hdr_keys=hdr_keys,
         buttons=buttons,
         tabs=tabs,
+        logs=logs,
         lang=lang,
         t=t
     )
@@ -54,11 +55,13 @@ def phones():
     set_language(lang)
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "phones.html",
         buttons=buttons,
         tabs=tabs,
         labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
+        logs=logs,
         lang=lang,
         t=t
     )
@@ -69,11 +72,13 @@ def received():
     set_language(lang)
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "received.html",
         buttons=buttons,
         tabs=tabs,
         labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
+        logs=logs,
         lang=lang,
         t=t
     )
@@ -84,11 +89,13 @@ def sent():
     set_language(lang)
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "sent.html",
         buttons=buttons,
         tabs=tabs,
         labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
+        logs=logs,
         lang=lang,
         t=t
     )
@@ -99,12 +106,14 @@ def rules():
     set_language(lang)
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "rules.html",
         rules_list=RULES,
         buttons=buttons,
         tabs=tabs,
         labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
+        logs=logs,
         lang=lang,
         t=t
     )
@@ -115,11 +124,13 @@ def no_rules():
     set_language(lang)
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "no_rules.html",
         buttons=buttons,
         tabs=tabs,
         labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
+        logs=logs,
         lang=lang,
         t=t
     )
@@ -130,11 +141,13 @@ def forward():
     set_language(lang)
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "forward.html",
         buttons=buttons,
         tabs=tabs,
         labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
+        logs=logs,
         lang=lang,
         t=t
     )
@@ -145,11 +158,13 @@ def settings():
     set_language(lang)
     buttons = current_app.config["TRANSLATIONS"]["buttons"]
     tabs    = current_app.config["TRANSLATIONS"]["tabs"]
+    logs    = current_app.config["TRANSLATIONS"].get("log_messages", {})
     return render_template(
         "settings.html",
         buttons=buttons,
         tabs=tabs,
         labels_all=current_app.config["TRANSLATIONS"]["table_headers"],
+        logs=logs,
         lang=lang,
         t=t
     )

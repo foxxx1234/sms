@@ -179,9 +179,8 @@ def get_modem_info(port, lang=None):
 
     # Проверка связи
     at_ok = send_at_command(port, "AT")
-    # Статус OK мы оставляем в английском (и не переводим),
-    # а отсутствие ответа локализуем
-    info["status"] = "OK" if "OK" in at_ok else t("status.no_response", lang)
+    # Статус модема
+    info["status"] = t("status.ok", lang) if "OK" in at_ok else t("status.no_response", lang)
 
     # Основные данные
     info["model"] = extract_data(send_at_command(port, "AT+CGMM")) or "—"
@@ -205,8 +204,11 @@ def get_modem_info(port, lang=None):
 
     # Статус регистрации в сети
     reg = send_at_command(port, "AT+CREG?") or ""
-    # строка Connected/Disconnected лучше локализовать на уровне шаблона
-    info["network"] = "Connected" if "+CREG: 0,1" in reg or "+CREG: 0,5" in reg else "Disconnected"
+    # Локализованный статус регистрации в сети
+    if "+CREG: 0,1" in reg or "+CREG: 0,5" in reg:
+        info["network"] = t("network_state.connected", lang)
+    else:
+        info["network"] = t("network_state.disconnected", lang)
 
     # Качество сигнала
     csq = send_at_command(port, "AT+CSQ") or ""

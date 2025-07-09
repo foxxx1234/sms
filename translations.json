@@ -62,7 +62,24 @@
     "good":  {"ru":"Хороший","en":"Good","zh":"好"}
   },
   "status": {
+    "ok": {"ru":"OK","en":"OK","zh":"OK"},
     "no_response": {"ru":"Нет ответа","en":"No response","zh":"无响应"}
+  },
+  "network_state": {
+    "connected": {"ru": "Подключено", "en": "Connected", "zh": "已连接"},
+    "disconnected": {"ru": "Отключено", "en": "Disconnected", "zh": "未连接"}
+  },
+  "log_messages": {
+    "rendered_ports": {"ru": "Отрисовано {n} портов", "en": "Rendered {n} ports", "zh": "渲染端口：{n}"},
+    "scanned_ports": {"ru": "Просканировано портов: {n}", "en": "Scanned ports: {n}", "zh": "扫描端口：{n}"},
+    "scan_error": {"ru": "Ошибка сканирования: {err}", "en": "Scan error: {err}", "zh": "扫描错误：{err}"},
+    "connect": {"ru": "Подключение: {ports}", "en": "connect: {ports}", "zh": "连接：{ports}"},
+    "action": {"ru": "{action}: {ports}", "en": "{action}: {ports}", "zh": "{action}: {ports}"},
+    "action_json": {"ru": "{action}: {data}", "en": "{action}: {data}", "zh": "{action}: {data}"},
+    "connect_error": {"ru": "Ошибка подключения: {err}", "en": "connect error: {err}", "zh": "连接错误：{err}"},
+    "disconnected": {"ru": "Отключено", "en": "disconnected", "zh": "已断开"},
+    "action_error": {"ru": "Ошибка {action}: {err}", "en": "{action} error: {err}", "zh": "{action}错误：{err}"},
+    "sorted": {"ru": "Отсортировано по {key} ({dir})", "en": "Sorted by {key} ({dir})", "zh": "按{key}排序（{dir}）"}
   },
   "rules_fields": {
     "pattern": { "ru":"Шаблон","en":"Pattern","zh":"模式" },
