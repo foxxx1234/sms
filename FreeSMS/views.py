@@ -429,6 +429,12 @@ def api_monitor():
                         event_logger.log_event(
                             "monitor_error", port=p, details=str(res)
                         )
+                        info = prev_by_port.get(p)
+                        if info:
+                            new_by_port[p] = info
+                            iccid_saved = info.get("iccid")
+                            if iccid_saved:
+                                new_by_sim[iccid_saved] = info
                         continue
                     info = res
                     port = info.get("port")
