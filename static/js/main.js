@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let connectController = null;
   let expandedCount  = 0;
   let hiddenCols     = [];
+  let monitorSource  = null;
   let scriptsDisabled = false;
 
   function setScriptsDisabled(state) {
@@ -94,6 +95,33 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('portInfo');
     }
     renderTable();
+  }
+
+  function startMonitoring(selPorts) {
+    stopMonitoring();
+    const ports = Array.isArray(selPorts) && selPorts.length ? selPorts : allPorts;
+    if (!ports.length) return;
+    const params = new URLSearchParams();
+    ports.forEach(p => params.append('ports', p));
+    monitorSource = new EventSource(`/api/monitor?${params.toString()}`);
+    monitorSource.onmessage = ev => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.port) {
+          updateRows({ [data.port]: data });
+        }
+      } catch (e) { console.error(e); }
+    };
+    monitorSource.onerror = err => {
+      console.error('monitor error', err);
+    };
+  }
+
+  function stopMonitoring() {
+    if (monitorSource) {
+      monitorSource.close();
+      monitorSource = null;
+    }
   }
 
   // Показываем/скрываем полное значение ячейки при клике
@@ -257,6 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // делаем функцию глобальной, чтобы её вызывал contextMenu.js
   window.updateRows = updateRows;
+  window.startMonitoring = startMonitoring;
+  window.stopMonitoring = stopMonitoring;
 
   //
   // Загрузить порты из API
@@ -293,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
       connectController = new AbortController();
       connectBtn.classList.add('active-state');
       disconnectBtn.classList.remove('active-state');
+      startMonitoring(ports);
 
       fetch('/api/connect', {
         method: 'POST',
@@ -353,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         connectController.abort();
         connectController = null;
       }
+      stopMonitoring();
       disconnectBtn.classList.add('active-state');
       connectBtn.classList.remove('active-state');
       setScriptsDisabled(true);
