@@ -1,6 +1,5 @@
 Flask>=2.0
-pyserial>=3.5
-pyserial-asyncio>=0.6
+python-gammu>=3.0
 pycountry>=24.6.1
 requests>=2.0
 deepdiff>=6.0
