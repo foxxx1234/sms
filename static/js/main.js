@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const buttonsTrans = window.buttons;    // из translations.json → buttons
   const tabsTrans    = window.tabs;       // из translations.json → tabs
   const labelsTrans  = window.labels;     // из translations.json → table_headers
+  const logsTrans    = window.logs || {}; // из translations.json → log_messages
   let columnKeys = [];
   try {
     const savedOrder = localStorage.getItem('columnOrder');
@@ -38,6 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const columnsPanel    = document.getElementById('columns-panel');
   function openLogSettings() {
     alert('Log settings are not implemented yet');
+  }
+
+  function trLog(key, params = {}) {
+    let msg = logsTrans[key] ? (logsTrans[key][currentLang] || logsTrans[key]['en'] || key) : key;
+    for (const p in params) {
+      msg = msg.replace(`{${p}}`, params[p]);
+    }
+    return msg;
   }
 
   //
@@ -171,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.overflowY = 'visible';
       }
     }
-    log(`Rendered ${subset.length} ports`);
+    log(trLog('rendered_ports', {n: subset.length}));
     applyHiddenColumns();
   }
 
@@ -263,9 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         displayedCount = 20;
         renderTable();
-        log(`Scanned ports: ${allPorts.length}`);
+        log(trLog('scanned_ports', {n: allPorts.length}));
       })
-      .catch(err => log(`Scan error: ${err}`));
+      .catch(err => log(trLog('scan_error', {err})));
   }
 
   window.loadPorts = loadPorts;
@@ -312,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                   const info = JSON.parse(data);
                   updateRows({ [info.port]: info });
-                  log(`connect: ${info.port}`, info.port);
+                  log(trLog('connect', {ports: info.port}), info.port);
                 } catch (e) {
                   console.error(e);
                 }
@@ -327,14 +336,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res) return;
         if (res.results) {
           updateRows(res.results);
-          log(`connect: ${Object.keys(res.results).join(', ')}`);
+          log(trLog('connect', {ports: Object.keys(res.results).join(', ')}));
         } else if (res.ports) {
-          log(`${action}: ${res.ports.join(', ')}`);
+          log(trLog('action', {action, ports: res.ports.join(', ')}));
         } else {
-          log(`${action}: ${JSON.stringify(res)}`);
+          log(trLog('action_json', {action, data: JSON.stringify(res)}));
         }
       })
-      .catch(err => log(`connect error: ${err}`));
+      .catch(err => log(trLog('connect_error', {err})));
 
       return; // handled via streamed POST response only
     }
@@ -357,17 +366,17 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(r => r.json())
     .then(res => {
       if (res.ports) {
-        log(`${action}: ${res.ports.join(', ')}`);
+        log(trLog('action', {action, ports: res.ports.join(', ')}));
       } else {
-        log(`${action}: ${JSON.stringify(res)}`);
+        log(trLog('action_json', {action, data: JSON.stringify(res)}));
       }
 
       if (action === 'disconnect') {
-        log('disconnected');
+        log(trLog('disconnected'));
         clearPortInfo(ports);
       }
     })
-    .catch(err => log(`${action} error: ${err}`));
+    .catch(err => log(trLog('action_error', {action, err})));
   }
 
   //
@@ -398,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return A < B ? -sortDir : A > B ? sortDir : 0;
     });
     renderTable();
-    log(`Sorted by ${key} (${sortDir>0?'asc':'desc'})`);
+    log(trLog('sorted', {key, dir: sortDir>0?'asc':'desc'}));
   }
 
   function setColumnVisibility(key, visible) {
