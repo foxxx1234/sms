@@ -429,9 +429,16 @@ def api_monitor():
                         continue
                     info = res
                     port = info.get("port")
-                    iccid = info.get("iccid") or info.get("imsi")
+                    iccid = info.get("iccid")
+                    if not iccid or iccid == "\u2014":
+                        iccid = None
+                    imsi = info.get("imsi")
+                    if not iccid and imsi and imsi != "\u2014":
+                        iccid = imsi
 
-                    old_info = prev_by_sim.get(iccid) if iccid else prev_by_port.get(port)
+                    old_info_sim = prev_by_sim.get(iccid) if iccid else None
+                    old_info_port = prev_by_port.get(port)
+                    old_info = old_info_sim if old_info_sim is not None else old_info_port
                     dd = DeepDiff(old_info or {}, info, ignore_order=True).to_dict()
                     diff = {}
                     for path, change in dd.get("values_changed", {}).items():
@@ -457,7 +464,7 @@ def api_monitor():
                         if iccid:
                             prev_by_sim[iccid] = info
                         yield f"data: {json.dumps(diff)}\n\n"
-                    time.sleep(1.0)
+                time.sleep(1.0)
         except GeneratorExit:
             return
         finally:
