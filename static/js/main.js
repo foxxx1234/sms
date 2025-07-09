@@ -218,7 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateRows(results) {
     let added = false;
     let changed = false;
+    let removed = false;
     Object.keys(results).forEach(port => {
+      if (results[port].removed) {
+        const row = tbody.querySelector(`tr[data-port="${port}"]`);
+        if (row) row.remove();
+        delete portInfo[port];
+        allPorts = allPorts.filter(p => p !== port);
+        removed = true;
+        return;
+      }
       let row = tbody.querySelector(`tr[data-port="${port}"]`);
       const current = portInfo[port] || {};
       portInfo[port] = Object.assign({}, current, results[port], { port });
@@ -285,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-    if (added || changed) {
+    if (added || changed || removed) {
       localStorage.setItem('portInfo', JSON.stringify(portInfo));
     }
   }
