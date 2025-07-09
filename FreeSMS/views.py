@@ -3,6 +3,7 @@
 import json
 import time
 import os
+import concurrent.futures
 from flask import (
     render_template, request, jsonify, make_response, current_app
 )
@@ -220,15 +221,22 @@ def api_connect():
         lang = request.cookies.get("lang", get_language())
 
         def generate():
-            for p in ports:
-                try:
-                    info = get_modem_info(p, lang)
-                except Exception as e:
-                    info = {"port": p, "status": str(e)}
-                if "port" not in info:
-                    info["port"] = p
-                event_logger.log_event("port_connected", port=p)
-                yield f"data: {json.dumps(info)}\n\n"
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=min(len(ports), 10)
+            ) as executor:
+                future_map = {
+                    executor.submit(get_modem_info, p, lang): p for p in ports
+                }
+                for future in concurrent.futures.as_completed(future_map):
+                    p = future_map[future]
+                    try:
+                        info = future.result()
+                    except Exception as e:
+                        info = {"port": p, "status": str(e)}
+                    if "port" not in info:
+                        info["port"] = p
+                    event_logger.log_event("port_connected", port=p)
+                    yield f"data: {json.dumps(info)}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
@@ -240,26 +248,41 @@ def api_connect():
     # Check if the client expects streaming responses
     if request.headers.get("Accept") == "text/event-stream":
         def generate():
-            for p in ports:
-                try:
-                    info = get_modem_info(p, lang)
-                except Exception as e:
-                    info = {"port": p, "status": str(e)}
-                if "port" not in info:
-                    info["port"] = p
-                event_logger.log_event("port_connected", port=p)
-                yield f"data: {json.dumps(info)}\n\n"
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=min(len(ports), 10)
+            ) as executor:
+                future_map = {
+                    executor.submit(get_modem_info, p, lang): p for p in ports
+                }
+                for future in concurrent.futures.as_completed(future_map):
+                    p = future_map[future]
+                    try:
+                        info = future.result()
+                    except Exception as e:
+                        info = {"port": p, "status": str(e)}
+                    if "port" not in info:
+                        info["port"] = p
+                    event_logger.log_event("port_connected", port=p)
+                    yield f"data: {json.dumps(info)}\n\n"
 
         return current_app.response_class(generate(), mimetype="text/event-stream")
 
     # Legacy behaviour – aggregate results in a single JSON
     results = {}
-    for p in ports:
-        try:
-            results[p] = get_modem_info(p, lang)
-        except Exception as e:
-            results[p] = {"error": str(e)}
-        event_logger.log_event("port_connected", port=p)
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(len(ports), 10)
+    ) as executor:
+        future_map = {
+            executor.submit(get_modem_info, p, lang): p for p in ports
+        }
+        for future in concurrent.futures.as_completed(future_map):
+            p = future_map[future]
+            try:
+                results[p] = future.result()
+            except Exception as e:
+                results[p] = {"error": str(e)}
+            event_logger.log_event("port_connected", port=p)
+
     return jsonify(success=True, ports=ports, results=results)
 
 @app.route("/api/disconnect", methods=["POST"])
