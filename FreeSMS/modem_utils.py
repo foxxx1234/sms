@@ -9,6 +9,8 @@ import glob
 import serial
 import serial.tools.list_ports
 import pycountry
+import asyncio
+import serial_asyncio
 
 from .i18n import t, get_language
 
@@ -65,6 +67,24 @@ def send_at_command(port, command, timeout=1.0):
             modem.write((command + "\r").encode("utf-8", errors="ignore"))
             time.sleep(0.2)
             return modem.read_all().decode("utf-8", errors="ignore")
+    except Exception:
+        return ""
+
+
+async def send_at_command_async(port, command, timeout=1.0):
+    """Asynchronously send AT command using serial_asyncio."""
+    try:
+        reader, writer = await serial_asyncio.open_serial_connection(
+            url=port, baudrate=115200
+        )
+        writer.write((command + "\r").encode("utf-8", errors="ignore"))
+        await asyncio.sleep(0.2)
+        try:
+            data = await asyncio.wait_for(reader.read(1024), timeout)
+        except asyncio.TimeoutError:
+            data = b""
+        writer.close()
+        return data.decode("utf-8", errors="ignore")
     except Exception:
         return ""
 
@@ -225,6 +245,58 @@ def get_modem_info(port, lang=None):
     info["phone"] = m.group(1) if m else "—"
 
     # Заглушки для SMS/Voice/USSD (реализуем позже)
+    info["sms"] = 0
+    info["voice"] = 0
+    info["ussd"] = ""
+
+    return info
+
+
+async def get_modem_info_async(port, lang=None, timeout=1.0):
+    """Asynchronously collect modem information using non-blocking I/O."""
+    if lang is None:
+        lang = get_language()
+
+    info = {"port": port}
+
+    at_ok = await send_at_command_async(port, "AT", timeout)
+    info["status"] = t("status.ok", lang) if "OK" in at_ok else t("status.no_response", lang)
+
+    info["model"] = extract_data(await send_at_command_async(port, "AT+CGMM", timeout)) or "—"
+    info["vendor"] = extract_data(await send_at_command_async(port, "AT+CGMI", timeout)) or "—"
+
+    imsi = extract_data(await send_at_command_async(port, "AT+CIMI", timeout))
+    info["imsi"] = imsi or "—"
+    operator = get_operator_from_imsi(imsi)
+    sim_country = get_country_from_imsi(imsi)
+
+    iccid = extract_data(await send_at_command_async(port, "AT+CCID", timeout))
+    info["iccid"] = iccid or "—"
+    if operator == "unknown" and iccid:
+        operator = get_operator_from_iccid(iccid)
+    if not sim_country and iccid:
+        sim_country = get_country_from_iccid(iccid)
+
+    info["operator"] = operator or "—"
+    info["sim_country"] = sim_country or "—"
+
+    reg = await send_at_command_async(port, "AT+CREG?", timeout) or ""
+    if "+CREG: 0,1" in reg or "+CREG: 0,5" in reg:
+        info["network"] = t("network_state.connected", lang)
+    else:
+        info["network"] = t("network_state.disconnected", lang)
+
+    csq = await send_at_command_async(port, "AT+CSQ", timeout) or ""
+    info["signal"] = parse_signal(csq, lang)
+
+    info["imei"] = extract_data(await send_at_command_async(port, "AT+CGSN", timeout)) or "—"
+    cpin = extract_data(await send_at_command_async(port, "AT+CPIN?", timeout))
+    info["cpin"] = cpin or "—"
+
+    phone_resp = (await send_at_command_async(port, "AT+CNUM", timeout)).strip()
+    m = re.search(r'"([+\\d]+)"', phone_resp)
+    info["phone"] = m.group(1) if m else "—"
+
     info["sms"] = 0
     info["voice"] = 0
     info["ussd"] = ""

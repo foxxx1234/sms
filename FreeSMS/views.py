@@ -4,12 +4,17 @@ import json
 import time
 import os
 import concurrent.futures
+import asyncio
 from flask import (
     render_template, request, jsonify, make_response, current_app
 )
 from . import app
 from . import event_logger
-from .modem_utils import list_modem_ports, get_modem_info
+from .modem_utils import (
+    list_modem_ports,
+    get_modem_info,
+    get_modem_info_async,
+)
 from .i18n import t, get_language, set_language
 
 # Заглушки для правил и USSD-конфига
@@ -406,34 +411,30 @@ def api_monitor():
 
     def generate():
         prev = {}
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=min(len(ports), 10)
-            ) as executor:
-                while True:
-                    future_map = {
-                        executor.submit(get_modem_info, p, lang): p for p in ports
-                    }
-                    for future in concurrent.futures.as_completed(future_map):
-                        p = future_map[future]
-                        try:
-                            info = future.result()
-                        except Exception as e:
-                            info = {"port": p, "error": str(e)}
-
-                        diff = {}
-                        old = prev.get(p, {})
-                        for k, v in info.items():
-                            if k == "port":
-                                continue
-                            if old.get(k) != v:
-                                diff[k] = v
-                        if diff:
-                            diff["port"] = p
-                            prev[p] = info
-                            yield f"data: {json.dumps(diff)}\n\n"
-                    time.sleep(0.5)
+            while True:
+                infos = loop.run_until_complete(
+                    asyncio.gather(*(get_modem_info_async(p, lang) for p in ports))
+                )
+                for info in infos:
+                    p = info.get("port")
+                    diff = {}
+                    old = prev.get(p, {})
+                    for k, v in info.items():
+                        if k == "port":
+                            continue
+                        if old.get(k) != v:
+                            diff[k] = v
+                    if diff:
+                        diff["port"] = p
+                        prev[p] = info
+                        yield f"data: {json.dumps(diff)}\n\n"
+                time.sleep(0.5)
         except GeneratorExit:
             return
+        finally:
+            loop.close()
 
     return current_app.response_class(generate(), mimetype="text/event-stream")
