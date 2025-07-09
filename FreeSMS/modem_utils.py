@@ -3,14 +3,11 @@
 import os
 import json
 import re
-import time
 import glob
 
-import serial
-import serial.tools.list_ports
 import pycountry
 import asyncio
-import serial_asyncio
+import gammu
 
 from .i18n import t, get_language
 
@@ -40,53 +37,39 @@ for entry in _ops_list:
 
 def list_modem_ports():
     """Возвращает список доступных COM-портов для модемов."""
-    ports = [p.device for p in serial.tools.list_ports.comports()]
-    if ports:
-        return ports
+    try:
+        devices = gammu.GetConfig(0)
+        ports = [devices.get("Device")] if devices else []
+        if ports and ports[0]:
+            return ports
+    except Exception:
+        ports = []
 
-    # Fallback scanning for environments where pyserial returns nothing
-    extra = []
+    # Fallback scanning when Gammu detection fails
     if os.name == "nt":
-        # Windows: probe common COM range
-        for i in range(1, 257):
-            extra.append(f"COM{i}")
+        ports.extend([f"COM{i}" for i in range(1, 257)])
     else:
-        # POSIX systems: typical modem device patterns
         patterns = ["/dev/ttyUSB*", "/dev/ttyACM*", "/dev/cu.*", "/dev/tty.*"]
         for pat in patterns:
-            extra.extend(glob.glob(pat))
-    return extra
+            ports.extend(glob.glob(pat))
+    return ports
 
 
 def send_at_command(port, command, timeout=1.0):
-    """
-    Отправляет AT-команду на модем и возвращает ответ.
-    """
+    """Отправляет AT-команду через библиотеку Gammu и возвращает ответ."""
     try:
-        with serial.Serial(port, 115200, timeout=timeout) as modem:
-            modem.write((command + "\r").encode("utf-8", errors="ignore"))
-            time.sleep(0.2)
-            return modem.read_all().decode("utf-8", errors="ignore")
+        sm = gammu.StateMachine()
+        sm.ReadConfig()
+        sm.SetConfig(0, {"Device": port, "Connection": "at"})
+        sm.Init()
+        return sm.SendATCommand(command)
     except Exception:
         return ""
 
 
 async def send_at_command_async(port, command, timeout=1.0):
-    """Asynchronously send AT command using serial_asyncio."""
-    try:
-        reader, writer = await serial_asyncio.open_serial_connection(
-            url=port, baudrate=115200
-        )
-        writer.write((command + "\r").encode("utf-8", errors="ignore"))
-        await asyncio.sleep(0.2)
-        try:
-            data = await asyncio.wait_for(reader.read(1024), timeout)
-        except asyncio.TimeoutError:
-            data = b""
-        writer.close()
-        return data.decode("utf-8", errors="ignore")
-    except Exception:
-        return ""
+    """Асинхронная отправка AT-команды через Gammu."""
+    return await asyncio.to_thread(send_at_command, port, command, timeout)
 
 
 def extract_data(response: str) -> str:
@@ -197,23 +180,43 @@ def get_modem_info(port, lang=None):
 
     info = {"port": port}
 
-    # Проверка связи
-    at_ok = send_at_command(port, "AT")
-    # Статус модема
-    info["status"] = t("status.ok", lang) if "OK" in at_ok else t("status.no_response", lang)
+    sm = gammu.StateMachine()
+    sm.ReadConfig()
+    sm.SetConfig(0, {"Device": port, "Connection": "at"})
 
-    # Основные данные
-    info["model"] = extract_data(send_at_command(port, "AT+CGMM")) or "—"
-    info["vendor"] = extract_data(send_at_command(port, "AT+CGMI")) or "—"
+    try:
+        sm.Init()
+        info["status"] = t("status.ok", lang)
+    except Exception:
+        info["status"] = t("status.no_response", lang)
+        return info
 
-    # IMSI → оператор и страна SIM
-    imsi = extract_data(send_at_command(port, "AT+CIMI"))
-    info["imsi"] = imsi or "—"
+    try:
+        info["model"] = sm.GetModel().get("Model", "—")
+    except Exception:
+        info["model"] = "—"
+
+    try:
+        info["vendor"] = sm.GetManufacturer().get("Manufacturer", "—")
+    except Exception:
+        info["vendor"] = "—"
+
+    try:
+        imsi = sm.GetSIMIMSI()
+        info["imsi"] = imsi
+    except Exception:
+        imsi = ""
+        info["imsi"] = "—"
     operator = get_operator_from_imsi(imsi)
     sim_country = get_country_from_imsi(imsi)
 
-    iccid = extract_data(send_at_command(port, "AT+CCID"))
-    info["iccid"] = iccid or "—"
+    try:
+        iccid = sm.GetICC()
+        info["iccid"] = iccid
+    except Exception:
+        iccid = ""
+        info["iccid"] = "—"
+
     if operator == "unknown" and iccid:
         operator = get_operator_from_iccid(iccid)
     if not sim_country and iccid:
@@ -222,29 +225,42 @@ def get_modem_info(port, lang=None):
     info["operator"] = operator or "—"
     info["sim_country"] = sim_country or "—"
 
-    # Статус регистрации в сети
-    reg = send_at_command(port, "AT+CREG?") or ""
-    # Локализованный статус регистрации в сети
-    if "+CREG: 0,1" in reg or "+CREG: 0,5" in reg:
-        info["network"] = t("network_state.connected", lang)
-    else:
+    try:
+        net = sm.GetNetworkInfo()
+        if net:
+            info["network"] = t("network_state.connected", lang)
+        else:
+            info["network"] = t("network_state.disconnected", lang)
+    except Exception:
         info["network"] = t("network_state.disconnected", lang)
 
-    # Качество сигнала
-    csq = send_at_command(port, "AT+CSQ") or ""
-    info["signal"] = parse_signal(csq, lang)
+    try:
+        sig = sm.GetSignalQuality()
+        rssi = sig.get("SignalStrength", 99)
+        csq_resp = f"+CSQ: {rssi},0"
+        info["signal"] = parse_signal(csq_resp, lang)
+    except Exception:
+        info["signal"] = t("signal.error", lang)
 
-    # Дополнительные данные
-    info["imei"] = extract_data(send_at_command(port, "AT+CGSN")) or "—"
-    cpin = extract_data(send_at_command(port, "AT+CPIN?"))
-    info["cpin"] = cpin or "—"
+    try:
+        info["imei"] = sm.GetIMEI()
+    except Exception:
+        info["imei"] = "—"
 
-    # Номер телефона SIM-карты
-    phone_resp = send_at_command(port, "AT+CNUM").strip()
-    m = re.search(r'"([+\\d]+)"', phone_resp)
-    info["phone"] = m.group(1) if m else "—"
+    try:
+        info["cpin"] = sm.GetSecurityStatus()
+    except Exception:
+        info["cpin"] = "—"
 
-    # Заглушки для SMS/Voice/USSD (реализуем позже)
+    try:
+        nums = sm.GetOwnNumbers()
+        if nums:
+            info["phone"] = nums[0].get("Number", "—")
+        else:
+            info["phone"] = "—"
+    except Exception:
+        info["phone"] = "—"
+
     info["sms"] = 0
     info["voice"] = 0
     info["ussd"] = ""
@@ -253,53 +269,6 @@ def get_modem_info(port, lang=None):
 
 
 async def get_modem_info_async(port, lang=None, timeout=1.0):
-    """Asynchronously collect modem information using non-blocking I/O."""
-    if lang is None:
-        lang = get_language()
-
-    info = {"port": port}
-
-    at_ok = await send_at_command_async(port, "AT", timeout)
-    info["status"] = t("status.ok", lang) if "OK" in at_ok else t("status.no_response", lang)
-
-    info["model"] = extract_data(await send_at_command_async(port, "AT+CGMM", timeout)) or "—"
-    info["vendor"] = extract_data(await send_at_command_async(port, "AT+CGMI", timeout)) or "—"
-
-    imsi = extract_data(await send_at_command_async(port, "AT+CIMI", timeout))
-    info["imsi"] = imsi or "—"
-    operator = get_operator_from_imsi(imsi)
-    sim_country = get_country_from_imsi(imsi)
-
-    iccid = extract_data(await send_at_command_async(port, "AT+CCID", timeout))
-    info["iccid"] = iccid or "—"
-    if operator == "unknown" and iccid:
-        operator = get_operator_from_iccid(iccid)
-    if not sim_country and iccid:
-        sim_country = get_country_from_iccid(iccid)
-
-    info["operator"] = operator or "—"
-    info["sim_country"] = sim_country or "—"
-
-    reg = await send_at_command_async(port, "AT+CREG?", timeout) or ""
-    if "+CREG: 0,1" in reg or "+CREG: 0,5" in reg:
-        info["network"] = t("network_state.connected", lang)
-    else:
-        info["network"] = t("network_state.disconnected", lang)
-
-    csq = await send_at_command_async(port, "AT+CSQ", timeout) or ""
-    info["signal"] = parse_signal(csq, lang)
-
-    info["imei"] = extract_data(await send_at_command_async(port, "AT+CGSN", timeout)) or "—"
-    cpin = extract_data(await send_at_command_async(port, "AT+CPIN?", timeout))
-    info["cpin"] = cpin or "—"
-
-    phone_resp = (await send_at_command_async(port, "AT+CNUM", timeout)).strip()
-    m = re.search(r'"([+\\d]+)"', phone_resp)
-    info["phone"] = m.group(1) if m else "—"
-
-    info["sms"] = 0
-    info["voice"] = 0
-    info["ussd"] = ""
-
-    return info
+    """Асинхронное получение информации о модеме через Gammu."""
+    return await asyncio.to_thread(get_modem_info, port, lang)
 
