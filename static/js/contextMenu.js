@@ -61,7 +61,17 @@ function showContextMenu(x, y, port, buttons, lang) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ports: [port] })
-        }).then(r => r.json()).then(updateRow);
+        })
+        .then(r => r.json())
+        .then(data => {
+          updateRow(data);
+          if (action === "connect" && typeof window.startMonitoring === 'function') {
+            window.startMonitoring([port]);
+          }
+          if (action === "disconnect" && typeof window.stopMonitoring === 'function') {
+            window.stopMonitoring();
+          }
+        });
       } else if (action === "ussd") {
         openUSSDModal([port]);
       } else if (action === "port_find") {

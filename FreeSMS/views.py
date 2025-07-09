@@ -373,3 +373,37 @@ def api_next_sim_pool_port():
 @app.route("/api/set_port_state", methods=["POST"])
 def api_set_port_state():
     return jsonify(success=True)
+
+
+@app.route("/api/monitor", methods=["GET"])
+def api_monitor():
+    """Stream modem state changes via Server-Sent Events."""
+    ports = request.args.getlist("ports") or list_modem_ports()
+    lang = request.cookies.get("lang", get_language())
+
+    def generate():
+        prev = {}
+        try:
+            while True:
+                for p in ports:
+                    try:
+                        info = get_modem_info(p, lang)
+                    except Exception as e:
+                        info = {"port": p, "error": str(e)}
+
+                    diff = {}
+                    old = prev.get(p, {})
+                    for k, v in info.items():
+                        if k == "port":
+                            continue
+                        if old.get(k) != v:
+                            diff[k] = v
+                    if diff:
+                        diff["port"] = p
+                        prev[p] = info
+                        yield f"data: {json.dumps(diff)}\n\n"
+                time.sleep(1)
+        except GeneratorExit:
+            return
+
+    return current_app.response_class(generate(), mimetype="text/event-stream")
