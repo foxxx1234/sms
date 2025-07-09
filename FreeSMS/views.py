@@ -412,38 +412,51 @@ def api_monitor():
 
     def generate():
         prev = {}
+        iccid_map = {}
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             while True:
-                infos = loop.run_until_complete(
-                    asyncio.gather(*(get_modem_info_async(p, lang) for p in ports))
+                tasks = [get_modem_info_async(p, lang) for p in ports]
+                results = loop.run_until_complete(
+                    asyncio.gather(*tasks, return_exceptions=True)
                 )
-                for info in infos:
-                    p = info.get("port")
+                for p, res in zip(ports, results):
+                    if isinstance(res, Exception):
+                        event_logger.log_event(
+                            "monitor_error", port=p, details=str(res)
+                        )
+                        continue
+                    info = res
                     old = prev.get(p, {})
                     dd = DeepDiff(old, info, ignore_order=True).to_dict()
                     diff = {}
-                    # Changed values
                     for path, change in dd.get("values_changed", {}).items():
                         key = path.strip("root[").strip("]'").split("['")[-1]
                         if key != "port":
                             diff[key] = change.get("new_value")
-                    # Added keys
                     for path in dd.get("dictionary_item_added", []):
                         key = path.strip("root[").strip("]'").split("['")[-1]
                         if key != "port":
                             diff[key] = info.get(key)
-                    # Removed keys
                     for path in dd.get("dictionary_item_removed", []):
                         key = path.strip("root[").strip("]'").split("['")[-1]
                         if key != "port":
                             diff[key] = None
+
+                    iccid = info.get("iccid")
+                    if iccid and iccid != "—":
+                        old_port = iccid_map.get(iccid)
+                        if old_port and old_port != p:
+                            diff["moved_from"] = old_port
+                            prev.pop(old_port, None)
                     if diff:
                         diff["port"] = p
                         prev[p] = info
+                        if iccid and iccid != "—":
+                            iccid_map[iccid] = p
                         yield f"data: {json.dumps(diff)}\n\n"
-                time.sleep(0.5)
+                    time.sleep(1.0)
         except GeneratorExit:
             return
         finally:
