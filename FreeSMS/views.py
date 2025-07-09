@@ -411,8 +411,8 @@ def api_monitor():
     lang = request.cookies.get("lang", get_language())
 
     def generate():
-        prev = {}
-        iccid_map = {}
+        prev_by_port = {}
+        prev_by_sim = {}
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
@@ -428,8 +428,11 @@ def api_monitor():
                         )
                         continue
                     info = res
-                    old = prev.get(p, {})
-                    dd = DeepDiff(old, info, ignore_order=True).to_dict()
+                    port = info.get("port")
+                    iccid = info.get("iccid") or info.get("imsi")
+
+                    old_info = prev_by_sim.get(iccid) if iccid else prev_by_port.get(port)
+                    dd = DeepDiff(old_info or {}, info, ignore_order=True).to_dict()
                     diff = {}
                     for path, change in dd.get("values_changed", {}).items():
                         key = path.strip("root[").strip("]'").split("['")[-1]
@@ -444,17 +447,15 @@ def api_monitor():
                         if key != "port":
                             diff[key] = None
 
-                    iccid = info.get("iccid")
-                    if iccid and iccid != "—":
-                        old_port = iccid_map.get(iccid)
-                        if old_port and old_port != p:
-                            diff["moved_from"] = old_port
-                            prev.pop(old_port, None)
+                    old_port = old_info.get("port") if old_info else None
+                    if iccid and old_port and old_port != port:
+                        diff["moved_from"] = old_port
+
                     if diff:
-                        diff["port"] = p
-                        prev[p] = info
-                        if iccid and iccid != "—":
-                            iccid_map[iccid] = p
+                        diff["port"] = port
+                        prev_by_port[port] = info
+                        if iccid:
+                            prev_by_sim[iccid] = info
                         yield f"data: {json.dumps(diff)}\n\n"
                     time.sleep(1.0)
         except GeneratorExit:
