@@ -3,12 +3,15 @@ import re
 import requests
 import pycountry
 
-# Source with up‑to‑date MCC/MNC information.  The jsDelivr dataset is
-# distributed as an ES module where the default export is a JSON array of
-# objects describing MCC/MNC pairs.  We convert that list to our
-# operators.json format (three‑letter country codes and slugified operator
-# names).
-URL = "https://cdn.jsdelivr.net/npm/mccmnc.json@1.2.0/+esm"
+# Source with up‑to‑date MCC/MNC information.  We rely on the dataset from
+# the pbakondy/mcc-mnc-list GitHub project, which is distributed as a JSON
+# array of objects describing MCC/MNC pairs.  The JSON file is fetched from
+# the raw GitHub URL and converted to our operators.json format (three-letter
+# country codes and slugified operator names).
+URL = (
+    "https://raw.githubusercontent.com/pbakondy/mcc-mnc-list/"
+    "master/mcc-mnc-list.json"
+)
 
 
 def fetch_operator_data():

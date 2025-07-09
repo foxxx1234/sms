@@ -3,7 +3,11 @@ import re
 import requests
 import pycountry
 
-URL = "https://cdn.jsdelivr.net/npm/mccmnc.json@1.2.0/+esm"
+# Dataset with MCC/MNC information from the pbakondy/mcc-mnc-list project.
+URL = (
+    "https://raw.githubusercontent.com/pbakondy/mcc-mnc-list/"
+    "master/mcc-mnc-list.json"
+)
 
 
 def fetch_data():
